@@ -291,6 +291,18 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRende
   const borderStyle = node.style.borderStyle || 'single';
   const chars = getBorderChars(borderStyle);
 
+  // Debug logging
+  if (node.type === 'Button') {
+    console.log(`[Canvas] Rendering Button:`, {
+      name: node.name,
+      propsWidth: node.props.width,
+      layoutWidth: layout.width,
+      layoutHeight: layout.height,
+      hasBorder,
+      horizontalChars: layout.width - 2
+    });
+  }
+
   const x = layout.x * cellWidth * zoom;
   const y = layout.y * cellHeight * zoom;
 

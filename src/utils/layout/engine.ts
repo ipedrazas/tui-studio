@@ -68,6 +68,7 @@ export class LayoutEngine {
       width = node.props.width;
     } else if (node.props.width === 'auto') {
       width = this.calculateAutoWidth(node);
+      console.log(`[Layout] Auto width for ${node.type} "${node.name}":`, width, 'props.width:', node.props.width);
     }
 
     if (typeof node.props.height === 'number') {

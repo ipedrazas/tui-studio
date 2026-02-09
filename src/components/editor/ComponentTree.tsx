@@ -1,8 +1,11 @@
 // Hierarchical component tree view
 
+import { useState } from 'react';
 import { ChevronDown, ChevronRight, Eye, EyeOff, Lock, Unlock } from 'lucide-react';
 import { useComponentStore, useSelectionStore } from '../../stores';
 import type { ComponentNode } from '../../types';
+import { dragStore } from '../../hooks/useDragAndDrop';
+import { COMPONENT_LIBRARY } from '../../constants/components';
 
 export function ComponentTree() {
   const componentStore = useComponentStore();
@@ -26,6 +29,8 @@ export function ComponentTree() {
 function TreeNode({ node, level }: { node: ComponentNode; level: number }) {
   const componentStore = useComponentStore();
   const selectionStore = useSelectionStore();
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const isSelected = selectionStore.isSelected(node.id);
   const hasChildren = node.children.length > 0;
@@ -50,13 +55,85 @@ function TreeNode({ node, level }: { node: ComponentNode; level: number }) {
     });
   };
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+    setIsDragging(true);
+    dragStore.startDrag({
+      type: 'existing-component',
+      componentId: node.id,
+    });
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', node.id);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    dragStore.endDrag();
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const dragData = dragStore.dragData;
+    if (!dragData) return;
+
+    if (dragData.type === 'existing-component' && dragData.componentId) {
+      // Don't drop on self or descendants
+      if (dragData.componentId === node.id) return;
+
+      // Move component to be child of this node
+      componentStore.moveComponent(dragData.componentId, node.id);
+    } else if (dragData.type === 'new-component' && dragData.componentType) {
+      // Add new component as child
+      const def = COMPONENT_LIBRARY[dragData.componentType];
+      if (def) {
+        const newComponent: Omit<ComponentNode, 'id'> = {
+          type: def.type,
+          name: def.name,
+          props: { ...def.defaultProps },
+          layout: { ...def.defaultLayout },
+          style: { ...def.defaultStyle },
+          events: { ...def.defaultEvents },
+          children: [],
+          locked: false,
+          hidden: false,
+          collapsed: false,
+        };
+        componentStore.addComponent(node.id, newComponent);
+      }
+    }
+
+    dragStore.endDrag();
+  };
+
   return (
     <div>
       {/* Node */}
       <div
-        className={`flex items-center gap-1 px-2 py-1 rounded cursor-pointer group ${
+        draggable={!node.locked}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`flex items-center gap-1 px-2 py-1 rounded cursor-grab group transition-colors ${
           isSelected ? 'bg-primary/20 border border-primary' : 'hover:bg-accent'
-        } ${node.hidden ? 'opacity-50' : ''}`}
+        } ${node.hidden ? 'opacity-50' : ''} ${
+          isDragOver ? 'bg-primary/30 border-2 border-dashed border-primary' : ''
+        } ${isDragging ? 'opacity-30' : ''}`}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
         onClick={() => selectionStore.select(node.id)}
       >

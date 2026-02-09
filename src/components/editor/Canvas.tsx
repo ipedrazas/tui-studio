@@ -183,8 +183,10 @@ interface ComponentRendererProps {
 
 function ComponentRenderer({ node, cellWidth, cellHeight, zoom, selectedIds }: ComponentRendererProps) {
   const selectionStore = useSelectionStore();
+  const componentStore = useComponentStore();
   const layout = layoutEngine.getLayout(node.id);
   const isSelected = selectedIds.has(node.id);
+  const [isDragging, setIsDragging] = useState(false);
 
   if (!layout || node.hidden) return null;
 
@@ -244,10 +246,56 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom, selectedIds }: C
   const x = layout.x * cellWidth * zoom;
   const y = layout.y * cellHeight * zoom;
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+    setIsDragging(true);
+    dragStore.startDrag({
+      type: 'existing-component',
+      componentId: node.id,
+    });
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', node.id);
+
+    // Select the component being dragged
+    selectionStore.select(node.id);
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    dragStore.endDrag();
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const dragData = dragStore.dragData;
+    if (!dragData || dragData.type !== 'existing-component' || !dragData.componentId) return;
+
+    // Don't drop on self
+    if (dragData.componentId === node.id) return;
+
+    // Move the dragged component to be a child of this component
+    componentStore.moveComponent(dragData.componentId, node.id);
+    dragStore.endDrag();
+  };
+
   return (
     <>
       <div
-        className={`absolute cursor-pointer transition-colors ${
+        draggable={!node.locked && node.type !== 'Box'}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        className={`absolute transition-colors ${
+          isDragging ? 'opacity-50 cursor-grabbing' : 'cursor-grab'
+        } ${
           isSelected ? 'ring-2 ring-primary ring-offset-2' : ''
         }`}
         style={{
@@ -258,7 +306,7 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom, selectedIds }: C
           fontWeight: node.style.bold ? 'bold' : 'normal',
           fontStyle: node.style.italic ? 'italic' : 'normal',
           textDecoration: node.style.underline ? 'underline' : 'none',
-          opacity: node.style.opacity ?? 1,
+          opacity: isDragging ? 0.5 : (node.style.opacity ?? 1),
           fontSize: `${12 * zoom}px`,
           pointerEvents: node.locked ? 'none' : 'auto',
         }}

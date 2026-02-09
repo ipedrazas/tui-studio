@@ -103,8 +103,8 @@ function renderText(node: ComponentNode, width: number, height: number): string[
 
 function renderButton(node: ComponentNode, width: number, height: number): string[] {
   const label = (node.props.label as string) || 'Button';
-  const iconLeft = (node.props.iconLeft as string) || '';
-  const iconRight = (node.props.iconRight as string) || '';
+  const iconLeft = (node.props.iconLeftEnabled && node.props.iconLeft) ? (node.props.iconLeft as string) : '';
+  const iconRight = (node.props.iconRightEnabled && node.props.iconRight) ? (node.props.iconRight as string) : '';
   const number = node.props.number as number | undefined;
   const separated = node.props.separated as boolean;
 

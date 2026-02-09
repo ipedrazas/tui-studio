@@ -191,8 +191,8 @@ export class LayoutEngine {
     switch (node.type) {
       case 'Button': {
         const label = (node.props.label as string) || 'Button';
-        const iconLeft = (node.props.iconLeft as string) || '';
-        const iconRight = (node.props.iconRight as string) || '';
+        const iconLeft = (node.props.iconLeftEnabled && node.props.iconLeft) ? (node.props.iconLeft as string) : '';
+        const iconRight = (node.props.iconRightEnabled && node.props.iconRight) ? (node.props.iconRight as string) : '';
         const number = node.props.number as number | undefined;
         const separated = node.props.separated as boolean;
 

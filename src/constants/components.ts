@@ -137,8 +137,10 @@ export const COMPONENT_LIBRARY: Record<ComponentType, ComponentDefinition> = {
     defaultProps: {
       label: 'Button',
       disabled: false,
-      iconLeft: '', // Icon or key on the left (e.g., '+', '^A', '⑃')
-      iconRight: '', // Icon on the right (e.g., '▾')
+      iconLeft: '', // Icon or key on the left (e.g., '+', '^A', '⑃', '🔥')
+      iconLeftEnabled: false, // Whether to show left icon
+      iconRight: '', // Icon on the right (e.g., '▾', '→', '✓')
+      iconRightEnabled: false, // Whether to show right icon
       number: undefined, // Number to show with left icon
       separated: false, // Whether to use divider between icon and label
       width: 'auto', // Auto-size to content

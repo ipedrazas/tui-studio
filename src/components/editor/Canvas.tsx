@@ -211,8 +211,8 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom, selectedIds }: C
         return <span>{node.props.content || 'Text'}</span>;
       case 'Button': {
         const label = node.props.label || 'Button';
-        const iconLeft = node.props.iconLeft as string || '';
-        const iconRight = node.props.iconRight as string || '';
+        const iconLeft = (node.props.iconLeftEnabled && node.props.iconLeft) ? node.props.iconLeft as string : '';
+        const iconRight = (node.props.iconRightEnabled && node.props.iconRight) ? node.props.iconRight as string : '';
         const number = node.props.number as number | undefined;
         const separated = node.props.separated as boolean;
 

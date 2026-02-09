@@ -197,25 +197,42 @@ function PropertiesTab({ component }: { component: import('../../types').Compone
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-3">
+                {/* Left Icon */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Icon Left</label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="checkbox"
+                      id="iconLeftEnabled"
+                      checked={(component.props.iconLeftEnabled as boolean) || false}
+                      onChange={(e) =>
+                        componentStore.updateProps(component.id, {
+                          iconLeftEnabled: e.target.checked,
+                        })
+                      }
+                    />
+                    <label htmlFor="iconLeftEnabled" className="text-sm font-medium">
+                      Icon Left
+                    </label>
+                  </div>
                   <input
                     type="text"
                     value={(component.props.iconLeft as string) || ''}
                     onChange={(e) =>
                       componentStore.updateProps(component.id, {
                         iconLeft: e.target.value,
+                        iconLeftEnabled: true, // Auto-enable when typing
                       })
                     }
-                    placeholder="+ or ^A"
-                    className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm font-mono"
+                    placeholder="+ or ^A or 🔥"
+                    disabled={!(component.props.iconLeftEnabled as boolean)}
+                    className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <div className="mt-1 flex flex-wrap gap-1">
-                    {['+', '-', '×', '✓', '⑃', '^A', '^C', '⌘'].map(icon => (
+                    {['+', '-', '×', '✓', '⑃', '^A', '^C', '⌘', '🔥', '⭐', '✨', '🚀'].map(icon => (
                       <button
                         key={icon}
-                        onClick={() => componentStore.updateProps(component.id, { iconLeft: icon })}
+                        onClick={() => componentStore.updateProps(component.id, { iconLeft: icon, iconLeftEnabled: true })}
                         className="px-2 py-0.5 text-xs bg-accent hover:bg-accent/80 rounded font-mono"
                         title={`Use ${icon}`}
                       >
@@ -224,24 +241,42 @@ function PropertiesTab({ component }: { component: import('../../types').Compone
                     ))}
                   </div>
                 </div>
+
+                {/* Right Icon */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Icon Right</label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="checkbox"
+                      id="iconRightEnabled"
+                      checked={(component.props.iconRightEnabled as boolean) || false}
+                      onChange={(e) =>
+                        componentStore.updateProps(component.id, {
+                          iconRightEnabled: e.target.checked,
+                        })
+                      }
+                    />
+                    <label htmlFor="iconRightEnabled" className="text-sm font-medium">
+                      Icon Right
+                    </label>
+                  </div>
                   <input
                     type="text"
                     value={(component.props.iconRight as string) || ''}
                     onChange={(e) =>
                       componentStore.updateProps(component.id, {
                         iconRight: e.target.value,
+                        iconRightEnabled: true, // Auto-enable when typing
                       })
                     }
-                    placeholder="▾"
-                    className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm font-mono"
+                    placeholder="▾ or ✓"
+                    disabled={!(component.props.iconRightEnabled as boolean)}
+                    className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <div className="mt-1 flex flex-wrap gap-1">
-                    {['▾', '▴', '→', '←', '↓', '↑', '⏎'].map(icon => (
+                    {['▾', '▴', '→', '←', '↓', '↑', '⏎', '✓', '✗', '⚡', '💡'].map(icon => (
                       <button
                         key={icon}
-                        onClick={() => componentStore.updateProps(component.id, { iconRight: icon })}
+                        onClick={() => componentStore.updateProps(component.id, { iconRight: icon, iconRightEnabled: true })}
                         className="px-2 py-0.5 text-xs bg-accent hover:bg-accent/80 rounded font-mono"
                         title={`Use ${icon}`}
                       >

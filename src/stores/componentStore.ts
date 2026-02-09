@@ -201,11 +201,16 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const component = findNodeById(root, id);
     if (!component) return;
 
-    component.props = { ...component.props, ...props };
+    // Create new object to trigger re-render
+    Object.assign(component, {
+      props: { ...component.props, ...props },
+    });
 
+    // Force new root reference
+    const newRoot = { ...root };
     set({
-      root: { ...root },
-      components: flattenTree(root),
+      root: newRoot,
+      components: flattenTree(newRoot),
     });
 
     get().saveHistory();
@@ -219,11 +224,16 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const component = findNodeById(root, id);
     if (!component) return;
 
-    component.layout = { ...component.layout, ...layout };
+    // Create new object to trigger re-render
+    Object.assign(component, {
+      layout: { ...component.layout, ...layout },
+    });
 
+    // Force new root reference
+    const newRoot = { ...root };
     set({
-      root: { ...root },
-      components: flattenTree(root),
+      root: newRoot,
+      components: flattenTree(newRoot),
     });
 
     get().saveHistory();
@@ -237,11 +247,16 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const component = findNodeById(root, id);
     if (!component) return;
 
-    component.style = { ...component.style, ...style };
+    // Create new object to trigger re-render
+    Object.assign(component, {
+      style: { ...component.style, ...style },
+    });
 
+    // Force new root reference
+    const newRoot = { ...root };
     set({
-      root: { ...root },
-      components: flattenTree(root),
+      root: newRoot,
+      components: flattenTree(newRoot),
     });
 
     get().saveHistory();
@@ -255,11 +270,16 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const component = findNodeById(root, id);
     if (!component) return;
 
-    component.events = { ...component.events, ...events };
+    // Create new object to trigger re-render
+    Object.assign(component, {
+      events: { ...component.events, ...events },
+    });
 
+    // Force new root reference
+    const newRoot = { ...root };
     set({
-      root: { ...root },
-      components: flattenTree(root),
+      root: newRoot,
+      components: flattenTree(newRoot),
     });
 
     get().saveHistory();

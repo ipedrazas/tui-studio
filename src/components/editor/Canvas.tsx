@@ -7,21 +7,29 @@ import { dragStore } from '../../hooks/useDragAndDrop';
 import { COMPONENT_LIBRARY } from '../../constants/components';
 
 export function Canvas() {
-  const canvasStore = useCanvasStore();
-  const componentStore = useComponentStore();
-  const selectionStore = useSelectionStore();
+  // Use Zustand selectors for proper reactivity
+  const root = useComponentStore(state => state.root);
+  const addComponent = useComponentStore(state => state.addComponent);
+  const setRoot = useComponentStore(state => state.setRoot);
+
+  const canvasWidth = useCanvasStore(state => state.width);
+  const canvasHeight = useCanvasStore(state => state.height);
+  const canvasZoom = useCanvasStore(state => state.zoom);
+  const showGrid = useCanvasStore(state => state.showGrid);
+
+  const select = useSelectionStore(state => state.select);
   const [isDragOver, setIsDragOver] = useState(false);
 
   const cellWidth = 8; // pixels per character
   const cellHeight = 16; // pixels per line
 
-  const canvasWidth = canvasStore.width * cellWidth * canvasStore.zoom;
-  const canvasHeight = canvasStore.height * cellHeight * canvasStore.zoom;
+  const viewportWidth = canvasWidth * cellWidth * canvasZoom;
+  const viewportHeight = canvasHeight * cellHeight * canvasZoom;
 
   // Calculate layout whenever components or canvas size changes
   useEffect(() => {
-    layoutEngine.calculateLayout(componentStore.root, canvasStore.width, canvasStore.height);
-  }, [componentStore.root, canvasStore.width, canvasStore.height]);
+    layoutEngine.calculateLayout(root, canvasWidth, canvasHeight);
+  }, [root, canvasWidth, canvasHeight]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -42,11 +50,11 @@ export function Canvas() {
 
     if (dragData.type === 'new-component' && dragData.componentType) {
       // Add new component to canvas
-      let parentId = componentStore.root?.id;
+      let parentId = root?.id;
 
       if (!parentId) {
         // Create root if it doesn't exist
-        const root: import('../../types').ComponentNode = {
+        const newRoot: import('../../types').ComponentNode = {
           id: 'root',
           type: 'Box',
           name: 'Root',
@@ -67,7 +75,7 @@ export function Canvas() {
           hidden: false,
           collapsed: false,
         };
-        componentStore.setRoot(root);
+        setRoot(newRoot);
         parentId = 'root'; // Now we have a parent to add to
       }
 
@@ -86,9 +94,9 @@ export function Canvas() {
           collapsed: false,
         };
 
-        const id = componentStore.addComponent(parentId, newComponent);
+        const id = addComponent(parentId, newComponent);
         if (id) {
-          selectionStore.select(id);
+          select(id);
         }
       }
     }
@@ -98,7 +106,7 @@ export function Canvas() {
 
   return (
     <div className="flex-1 flex items-center justify-center bg-muted/20 overflow-auto p-8">
-      <div className="relative" style={{ width: canvasWidth, height: canvasHeight }}>
+      <div className="relative" style={{ width: viewportWidth, height: viewportHeight }}>
         {/* Canvas Background */}
         <div
           className={`absolute inset-0 bg-background border-2 rounded transition-colors ${
@@ -106,14 +114,14 @@ export function Canvas() {
           }`}
           style={{
             fontFamily: 'monospace',
-            fontSize: `${12 * canvasStore.zoom}px`,
+            fontSize: `${12 * canvasZoom}px`,
           }}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
         >
           {/* Grid */}
-          {canvasStore.showGrid && (
+          {showGrid && (
             <svg
               className="absolute inset-0 pointer-events-none opacity-20"
               width="100%"
@@ -122,13 +130,13 @@ export function Canvas() {
               <defs>
                 <pattern
                   id="grid"
-                  width={cellWidth * canvasStore.zoom}
-                  height={cellHeight * canvasStore.zoom}
+                  width={cellWidth * canvasZoom}
+                  height={cellHeight * canvasZoom}
                   patternUnits="userSpaceOnUse"
                 >
                   <rect
-                    width={cellWidth * canvasStore.zoom}
-                    height={cellHeight * canvasStore.zoom}
+                    width={cellWidth * canvasZoom}
+                    height={cellHeight * canvasZoom}
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="0.5"
@@ -140,7 +148,7 @@ export function Canvas() {
           )}
 
           {/* Empty State */}
-          {!componentStore.root && (
+          {!root && (
             <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm pointer-events-none">
               <div className="text-center">
                 <p className="mb-2">{isDragOver ? 'Drop to add component' : 'Drag components here'}</p>
@@ -150,14 +158,13 @@ export function Canvas() {
           )}
 
           {/* Component Rendering */}
-          {componentStore.root && (
+          {root && (
             <div className="absolute inset-0" style={{ fontFamily: 'monospace' }}>
               <ComponentRenderer
-                node={componentStore.root}
+                node={root}
                 cellWidth={cellWidth}
                 cellHeight={cellHeight}
-                zoom={canvasStore.zoom}
-                selectedIds={selectionStore.selectedIds}
+                zoom={canvasZoom}
               />
             </div>
           )}
@@ -165,7 +172,7 @@ export function Canvas() {
 
         {/* Canvas Info */}
         <div className="absolute -bottom-6 left-0 text-xs text-muted-foreground">
-          {canvasStore.width}×{canvasStore.height} cols/rows
+          {canvasWidth}×{canvasHeight} cols/rows
         </div>
       </div>
     </div>
@@ -178,12 +185,14 @@ interface ComponentRendererProps {
   cellWidth: number;
   cellHeight: number;
   zoom: number;
-  selectedIds: Set<string>;
 }
 
-function ComponentRenderer({ node, cellWidth, cellHeight, zoom, selectedIds }: ComponentRendererProps) {
-  const selectionStore = useSelectionStore();
-  const componentStore = useComponentStore();
+function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRendererProps) {
+  // Use Zustand selectors for proper reactivity
+  const selectedIds = useSelectionStore(state => state.selectedIds);
+  const select = useSelectionStore(state => state.select);
+  const moveComponent = useComponentStore(state => state.moveComponent);
+
   const layout = layoutEngine.getLayout(node.id);
   const isSelected = selectedIds.has(node.id);
   const [isDragging, setIsDragging] = useState(false);
@@ -296,7 +305,7 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom, selectedIds }: C
     e.dataTransfer.setData('text/plain', node.id);
 
     // Select the component being dragged
-    selectionStore.select(node.id);
+    select(node.id);
   };
 
   const handleDragEnd = () => {
@@ -320,7 +329,7 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom, selectedIds }: C
     if (dragData.componentId === node.id) return;
 
     // Move the dragged component to be a child of this component
-    componentStore.moveComponent(dragData.componentId, node.id);
+    moveComponent(dragData.componentId, node.id);
     dragStore.endDrag();
   };
 
@@ -351,7 +360,7 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom, selectedIds }: C
         }}
         onClick={(e) => {
           e.stopPropagation();
-          selectionStore.select(node.id);
+          select(node.id);
         }}
       >
         {hasBorder ? (
@@ -400,7 +409,6 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom, selectedIds }: C
           cellWidth={cellWidth}
           cellHeight={cellHeight}
           zoom={zoom}
-          selectedIds={selectedIds}
         />
       ))}
     </>

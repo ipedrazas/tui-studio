@@ -6,6 +6,7 @@ import * as LucideIcons from 'lucide-react';
 import { COMPONENT_LIBRARY, CATEGORIES, getComponentsByCategory } from '../../constants/components';
 import { useComponentStore } from '../../stores';
 import type { ComponentNode } from '../../types';
+import { dragStore } from '../../hooks/useDragAndDrop';
 
 export function ComponentPalette() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
@@ -111,7 +112,19 @@ export function ComponentPalette() {
                       <button
                         key={component.type}
                         onClick={() => addComponent(component.type)}
-                        className="w-full p-2 rounded border border-border hover:bg-accent hover:border-accent-foreground transition-colors flex items-center gap-3 text-left"
+                        draggable
+                        onDragStart={(e) => {
+                          dragStore.startDrag({
+                            type: 'new-component',
+                            componentType: component.type,
+                          });
+                          e.dataTransfer.effectAllowed = 'copy';
+                          e.dataTransfer.setData('text/plain', component.type);
+                        }}
+                        onDragEnd={() => {
+                          dragStore.endDrag();
+                        }}
+                        className="w-full p-2 rounded border border-border hover:bg-accent hover:border-accent-foreground transition-colors flex items-center gap-3 text-left cursor-move"
                       >
                         {IconComponent && (
                           <IconComponent className="w-4 h-4 text-muted-foreground flex-shrink-0" />

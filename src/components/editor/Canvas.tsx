@@ -1,13 +1,16 @@
 // Main canvas for displaying the TUI design
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useCanvasStore, useComponentStore, useSelectionStore } from '../../stores';
 import { layoutEngine } from '../../utils/layout';
+import { dragStore } from '../../hooks/useDragAndDrop';
+import { COMPONENT_LIBRARY } from '../../constants/components';
 
 export function Canvas() {
   const canvasStore = useCanvasStore();
   const componentStore = useComponentStore();
   const selectionStore = useSelectionStore();
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const cellWidth = 8; // pixels per character
   const cellHeight = 16; // pixels per line
@@ -20,16 +23,94 @@ export function Canvas() {
     layoutEngine.calculateLayout(componentStore.root, canvasStore.width, canvasStore.height);
   }, [componentStore.root, canvasStore.width, canvasStore.height]);
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const dragData = dragStore.dragData;
+    if (!dragData) return;
+
+    if (dragData.type === 'new-component' && dragData.componentType) {
+      // Add new component to canvas
+      const parentId = componentStore.root?.id || null;
+
+      if (!parentId) {
+        // Create root if it doesn't exist
+        const root: import('../../types').ComponentNode = {
+          id: 'root',
+          type: 'Box',
+          name: 'Root',
+          props: { width: 80, height: 24 },
+          layout: {
+            type: 'flexbox',
+            direction: 'column',
+            gap: 1,
+            padding: 2,
+          },
+          style: {
+            border: true,
+            borderStyle: 'single',
+          },
+          events: {},
+          children: [],
+          locked: false,
+          hidden: false,
+          collapsed: false,
+        };
+        componentStore.setRoot(root);
+        return;
+      }
+
+      const def = COMPONENT_LIBRARY[dragData.componentType];
+      if (def) {
+        const newComponent: Omit<import('../../types').ComponentNode, 'id'> = {
+          type: def.type,
+          name: def.name,
+          props: { ...def.defaultProps },
+          layout: { ...def.defaultLayout },
+          style: { ...def.defaultStyle },
+          events: { ...def.defaultEvents },
+          children: [],
+          locked: false,
+          hidden: false,
+          collapsed: false,
+        };
+
+        const id = componentStore.addComponent(parentId, newComponent);
+        if (id) {
+          selectionStore.select(id);
+        }
+      }
+    }
+
+    dragStore.endDrag();
+  };
+
   return (
     <div className="flex-1 flex items-center justify-center bg-muted/20 overflow-auto p-8">
       <div className="relative" style={{ width: canvasWidth, height: canvasHeight }}>
         {/* Canvas Background */}
         <div
-          className="absolute inset-0 bg-background border-2 border-border rounded"
+          className={`absolute inset-0 bg-background border-2 rounded transition-colors ${
+            isDragOver ? 'border-primary border-dashed' : 'border-border'
+          }`}
           style={{
             fontFamily: 'monospace',
             fontSize: `${12 * canvasStore.zoom}px`,
           }}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
         >
           {/* Grid */}
           {canvasStore.showGrid && (
@@ -60,9 +141,9 @@ export function Canvas() {
 
           {/* Empty State */}
           {!componentStore.root && (
-            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm pointer-events-none">
               <div className="text-center">
-                <p className="mb-2">Drop components here</p>
+                <p className="mb-2">{isDragOver ? 'Drop to add component' : 'Drag components here'}</p>
                 <p className="text-xs">or click components in the palette</p>
               </div>
             </div>

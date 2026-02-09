@@ -196,6 +196,93 @@ function PropertiesTab({ component }: { component: import('../../types').Compone
                   className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Icon Left</label>
+                  <input
+                    type="text"
+                    value={(component.props.iconLeft as string) || ''}
+                    onChange={(e) =>
+                      componentStore.updateProps(component.id, {
+                        iconLeft: e.target.value,
+                      })
+                    }
+                    placeholder="+ or ^A"
+                    className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm font-mono"
+                  />
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {['+', '-', '×', '✓', '⑃', '^A', '^C', '⌘'].map(icon => (
+                      <button
+                        key={icon}
+                        onClick={() => componentStore.updateProps(component.id, { iconLeft: icon })}
+                        className="px-2 py-0.5 text-xs bg-accent hover:bg-accent/80 rounded font-mono"
+                        title={`Use ${icon}`}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Icon Right</label>
+                  <input
+                    type="text"
+                    value={(component.props.iconRight as string) || ''}
+                    onChange={(e) =>
+                      componentStore.updateProps(component.id, {
+                        iconRight: e.target.value,
+                      })
+                    }
+                    placeholder="▾"
+                    className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm font-mono"
+                  />
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {['▾', '▴', '→', '←', '↓', '↑', '⏎'].map(icon => (
+                      <button
+                        key={icon}
+                        onClick={() => componentStore.updateProps(component.id, { iconRight: icon })}
+                        className="px-2 py-0.5 text-xs bg-accent hover:bg-accent/80 rounded font-mono"
+                        title={`Use ${icon}`}
+                      >
+                        {icon}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Number (with icon)</label>
+                <input
+                  type="number"
+                  value={(component.props.number as number) || ''}
+                  onChange={(e) =>
+                    componentStore.updateProps(component.id, {
+                      number: e.target.value ? parseInt(e.target.value) : undefined,
+                    })
+                  }
+                  placeholder="Optional"
+                  className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="separated"
+                  checked={(component.props.separated as boolean) || false}
+                  onChange={(e) =>
+                    componentStore.updateProps(component.id, {
+                      separated: e.target.checked,
+                    })
+                  }
+                />
+                <label htmlFor="separated" className="text-sm">
+                  Separated Layout (with divider)
+                </label>
+              </div>
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"

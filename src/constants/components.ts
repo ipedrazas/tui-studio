@@ -137,6 +137,10 @@ export const COMPONENT_LIBRARY: Record<ComponentType, ComponentDefinition> = {
     defaultProps: {
       label: 'Button',
       disabled: false,
+      iconLeft: '', // Icon or key on the left (e.g., '+', '^A', '⑃')
+      iconRight: '', // Icon on the right (e.g., '▾')
+      number: undefined, // Number to show with left icon
+      separated: false, // Whether to use divider between icon and label
       width: 'auto', // Auto-size to content
       height: 'auto',
     },
@@ -146,7 +150,7 @@ export const COMPONENT_LIBRARY: Record<ComponentType, ComponentDefinition> = {
     },
     defaultStyle: {
       border: true,
-      borderStyle: 'rounded',
+      borderStyle: 'rounded', // or 'single' for straight corners
       bold: true,
     },
     defaultEvents: {

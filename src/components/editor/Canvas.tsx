@@ -209,8 +209,28 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom, selectedIds }: C
     switch (node.type) {
       case 'Text':
         return <span>{node.props.content || 'Text'}</span>;
-      case 'Button':
-        return <span className="font-bold">[{node.props.label || 'Button'}]</span>;
+      case 'Button': {
+        const label = node.props.label || 'Button';
+        const iconLeft = node.props.iconLeft as string || '';
+        const iconRight = node.props.iconRight as string || '';
+        const number = node.props.number as number | undefined;
+        const separated = node.props.separated as boolean;
+
+        if (separated && iconLeft) {
+          const leftSection = number !== undefined ? `${iconLeft} ${number}` : iconLeft;
+          return (
+            <span className="font-bold">
+              {leftSection} │ {label}{iconRight ? ` ${iconRight}` : ''}
+            </span>
+          );
+        }
+
+        return (
+          <span className="font-bold">
+            {iconLeft && `${iconLeft} `}{label}{iconRight && ` ${iconRight}`}
+          </span>
+        );
+      }
       case 'TextInput':
         return <span>[{node.props.placeholder || '___________'}]</span>;
       case 'ProgressBar':

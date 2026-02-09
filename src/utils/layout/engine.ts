@@ -189,12 +189,35 @@ export class LayoutEngine {
     // Simple auto width calculation
     // In a real implementation, this would measure content
     switch (node.type) {
-      case 'Button':
+      case 'Button': {
         const label = (node.props.label as string) || 'Button';
-        // Account for brackets [ ] and spaces: [space]text[space]
-        const contentWidth = label.length + 4;
+        const iconLeft = (node.props.iconLeft as string) || '';
+        const iconRight = (node.props.iconRight as string) || '';
+        const number = node.props.number as number | undefined;
+        const separated = node.props.separated as boolean;
+
+        let contentWidth = label.length + 2; // +2 for side padding
+
+        // Add left icon/key
+        if (iconLeft) {
+          if (separated) {
+            // Separated layout: " icon │ label " or " icon N │ label "
+            const leftSection = number !== undefined ? iconLeft.length + String(number).length + 1 : iconLeft.length;
+            contentWidth += leftSection + 5; // +5 for " │ " and spaces
+          } else {
+            // Inline: " icon label "
+            contentWidth += iconLeft.length + 1; // +1 for space after icon
+          }
+        }
+
+        // Add right icon
+        if (iconRight) {
+          contentWidth += iconRight.length + 1; // +1 for space before icon
+        }
+
         // Add border width if border is enabled
         return node.style.border ? contentWidth + 2 : contentWidth;
+      }
       case 'Text':
         const content = (node.props.content as string) || '';
         const lines = content.split('\n');

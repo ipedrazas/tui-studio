@@ -103,16 +103,76 @@ function renderText(node: ComponentNode, width: number, height: number): string[
 
 function renderButton(node: ComponentNode, width: number, height: number): string[] {
   const label = (node.props.label as string) || 'Button';
-  const disabled = node.props.disabled as boolean;
-  const contentArea = node.style.border ? getContentArea(width, height, { style: 'single' }) : { width, height };
+  const iconLeft = (node.props.iconLeft as string) || '';
+  const iconRight = (node.props.iconRight as string) || '';
+  const number = node.props.number as number | undefined;
+  const separated = node.props.separated as boolean;
 
-  const buttonText = disabled ? `[ ${label} ]` : `[ ${label} ]`;
-  const truncated = truncateText(buttonText, contentArea.width);
-  const padded = padText(truncated, contentArea.width, 'center');
+  if (!node.style.border) {
+    // No border - just render text
+    const left = iconLeft ? `${iconLeft} ` : '';
+    const right = iconRight ? ` ${iconRight}` : '';
+    const buttonText = `${left}${label}${right}`;
+    return [buttonText];
+  }
 
-  const lines = [padded];
-  while (lines.length < contentArea.height) {
-    lines.push(' '.repeat(contentArea.width));
+  const borderStyle = BORDER_STYLES[node.style.borderStyle || 'rounded'] || BORDER_STYLES.rounded;
+  const lines: string[] = [];
+
+  if (separated && iconLeft) {
+    // Separated button with divider
+    const leftSection = number !== undefined ? `${iconLeft} ${number}` : iconLeft;
+    const leftWidth = leftSection.length + 2; // +2 for padding
+    const rightText = `${label}${iconRight ? ' ' + iconRight : ''}`;
+    const rightWidth = width - leftWidth - 3; // -3 for borders and divider
+
+    // Determine divider characters based on border style
+    const divTop = node.style.borderStyle === 'single' || node.style.borderStyle === 'rounded' ? '┰' :
+                   node.style.borderStyle === 'double' ? '╦' : '┰';
+    const divBottom = node.style.borderStyle === 'single' || node.style.borderStyle === 'rounded' ? '┴' :
+                      node.style.borderStyle === 'double' ? '╩' : '┴';
+
+    // Top border: ╭───┰───────────╮
+    lines.push(
+      borderStyle.topLeft +
+      borderStyle.top.repeat(leftWidth) +
+      divTop +
+      borderStyle.top.repeat(rightWidth) +
+      borderStyle.topRight
+    );
+
+    // Content: │ + │ Add Agent │
+    lines.push(
+      borderStyle.left +
+      ` ${leftSection} `.padEnd(leftWidth + 1) +
+      '│' +
+      ` ${rightText} `.padEnd(rightWidth + 1) +
+      borderStyle.right
+    );
+
+    // Bottom border: ╰───┴───────────╯
+    lines.push(
+      borderStyle.bottomLeft +
+      borderStyle.bottom.repeat(leftWidth) +
+      divBottom +
+      borderStyle.bottom.repeat(rightWidth) +
+      borderStyle.bottomRight
+    );
+  } else {
+    // Standard button
+    const left = iconLeft ? `${iconLeft} ` : '';
+    const right = iconRight ? ` ${iconRight}` : '';
+    const buttonText = ` ${left}${label}${right} `;
+    const contentWidth = width - 2; // -2 for left/right borders
+
+    // Top border
+    lines.push(borderStyle.topLeft + borderStyle.top.repeat(contentWidth) + borderStyle.topRight);
+
+    // Content
+    lines.push(borderStyle.left + padText(buttonText, contentWidth, 'center') + borderStyle.right);
+
+    // Bottom border
+    lines.push(borderStyle.bottomLeft + borderStyle.bottom.repeat(contentWidth) + borderStyle.bottomRight);
   }
 
   return lines;

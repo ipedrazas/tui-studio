@@ -198,14 +198,16 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const { root } = get();
     if (!root) return;
 
-    const component = findNodeById(root, id);
+    // Clone tree FIRST to create new references
+    const newRoot = cloneNode(root);
+
+    // Find component in the NEW tree
+    const component = findNodeById(newRoot, id);
     if (!component) return;
 
-    // Mutate the component props
+    // Mutate the NEW tree's component
     component.props = { ...component.props, ...props };
 
-    // Clone entire tree to ensure React detects changes
-    const newRoot = cloneNode(root);
     set({
       root: newRoot,
       components: flattenTree(newRoot),
@@ -219,14 +221,16 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const { root } = get();
     if (!root) return;
 
-    const component = findNodeById(root, id);
+    // Clone tree FIRST to create new references
+    const newRoot = cloneNode(root);
+
+    // Find component in the NEW tree
+    const component = findNodeById(newRoot, id);
     if (!component) return;
 
-    // Mutate the component layout
+    // Mutate the NEW tree's component
     component.layout = { ...component.layout, ...layout };
 
-    // Clone entire tree to ensure React detects changes
-    const newRoot = cloneNode(root);
     set({
       root: newRoot,
       components: flattenTree(newRoot),
@@ -240,14 +244,16 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const { root } = get();
     if (!root) return;
 
-    const component = findNodeById(root, id);
+    // Clone tree FIRST to create new references
+    const newRoot = cloneNode(root);
+
+    // Find component in the NEW tree
+    const component = findNodeById(newRoot, id);
     if (!component) return;
 
-    // Mutate the component style
+    // Mutate the NEW tree's component
     component.style = { ...component.style, ...style };
 
-    // Clone entire tree to ensure React detects changes
-    const newRoot = cloneNode(root);
     set({
       root: newRoot,
       components: flattenTree(newRoot),
@@ -261,14 +267,16 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const { root } = get();
     if (!root) return;
 
-    const component = findNodeById(root, id);
+    // Clone tree FIRST to create new references
+    const newRoot = cloneNode(root);
+
+    // Find component in the NEW tree
+    const component = findNodeById(newRoot, id);
     if (!component) return;
 
-    // Mutate the component events
+    // Mutate the NEW tree's component
     component.events = { ...component.events, ...events };
 
-    // Clone entire tree to ensure React detects changes
-    const newRoot = cloneNode(root);
     set({
       root: newRoot,
       components: flattenTree(newRoot),

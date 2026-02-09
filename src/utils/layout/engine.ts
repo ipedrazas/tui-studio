@@ -191,11 +191,15 @@ export class LayoutEngine {
     switch (node.type) {
       case 'Button':
         const label = (node.props.label as string) || 'Button';
-        return label.length + 4; // Padding for button
+        // Account for brackets [ ] and spaces: [space]text[space]
+        const contentWidth = label.length + 4;
+        // Add border width if border is enabled
+        return node.style.border ? contentWidth + 2 : contentWidth;
       case 'Text':
         const content = (node.props.content as string) || '';
         const lines = content.split('\n');
-        return Math.max(...lines.map(l => l.length), 10);
+        const maxLineLength = Math.max(...lines.map(l => l.length), 10);
+        return node.style.border ? maxLineLength + 2 : maxLineLength;
       default:
         return 20;
     }
@@ -206,10 +210,12 @@ export class LayoutEngine {
     switch (node.type) {
       case 'Button':
       case 'TextInput':
-        return 3;
+        // 1 line of text + border (top + bottom) if enabled
+        return node.style.border ? 3 : 1;
       case 'Text':
         const content = (node.props.content as string) || '';
-        return content.split('\n').length;
+        const contentHeight = content.split('\n').length;
+        return node.style.border ? contentHeight + 2 : contentHeight;
       default:
         return 3;
     }

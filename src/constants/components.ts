@@ -137,10 +137,12 @@ export const COMPONENT_LIBRARY: Record<ComponentType, ComponentDefinition> = {
     defaultProps: {
       label: 'Button',
       disabled: false,
+      width: 'auto', // Auto-size to content
+      height: 'auto',
     },
     defaultLayout: {
       type: 'none',
-      padding: { top: 0, right: 2, bottom: 0, left: 2 },
+      padding: 1,
     },
     defaultStyle: {
       border: true,

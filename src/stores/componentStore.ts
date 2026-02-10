@@ -62,7 +62,11 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const { root } = get();
     if (!root) return '';
 
-    const parent = findNodeById(root, parentId);
+    // Clone tree FIRST to create new references
+    const newRoot = cloneNode(root);
+
+    // Find parent in the NEW tree
+    const parent = findNodeById(newRoot, parentId);
     if (!parent) return '';
 
     const id = generateComponentId();
@@ -72,7 +76,7 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
       children: [],
     };
 
-    // Insert at index or append
+    // Insert at index or append in the NEW tree
     if (index !== undefined) {
       parent.children.splice(index, 0, newComponent);
     } else {
@@ -80,8 +84,8 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     }
 
     set({
-      root: { ...root },
-      components: flattenTree(root),
+      root: newRoot,
+      components: flattenTree(newRoot),
     });
 
     get().saveHistory();
@@ -93,14 +97,18 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const { root } = get();
     if (!root || root.id === id) return;
 
-    const parent = findParentNode(root, id);
+    // Clone tree FIRST
+    const newRoot = cloneNode(root);
+
+    // Find parent in the NEW tree
+    const parent = findParentNode(newRoot, id);
     if (!parent) return;
 
     parent.children = parent.children.filter((child) => child.id !== id);
 
     set({
-      root: { ...root },
-      components: flattenTree(root),
+      root: newRoot,
+      components: flattenTree(newRoot),
     });
 
     get().saveHistory();
@@ -111,14 +119,18 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const { root } = get();
     if (!root) return;
 
-    const component = findNodeById(root, id);
+    // Clone tree FIRST
+    const newRoot = cloneNode(root);
+
+    // Find component in the NEW tree
+    const component = findNodeById(newRoot, id);
     if (!component) return;
 
     Object.assign(component, updates);
 
     set({
-      root: { ...root },
-      components: flattenTree(root),
+      root: newRoot,
+      components: flattenTree(newRoot),
     });
 
     get().saveHistory();
@@ -129,8 +141,11 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const { root } = get();
     if (!root || id === newParentId) return;
 
-    // Find component and remove from old parent
-    const oldParent = findParentNode(root, id);
+    // Clone tree FIRST
+    const newRoot = cloneNode(root);
+
+    // Find component and remove from old parent in the NEW tree
+    const oldParent = findParentNode(newRoot, id);
     if (!oldParent) return;
 
     const componentIndex = oldParent.children.findIndex((c) => c.id === id);
@@ -138,8 +153,8 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
 
     const [component] = oldParent.children.splice(componentIndex, 1);
 
-    // Add to new parent
-    const newParent = findNodeById(root, newParentId);
+    // Add to new parent in the NEW tree
+    const newParent = findNodeById(newRoot, newParentId);
     if (!newParent) {
       // Restore if new parent not found
       oldParent.children.splice(componentIndex, 0, component);
@@ -153,8 +168,8 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     }
 
     set({
-      root: { ...root },
-      components: flattenTree(root),
+      root: newRoot,
+      components: flattenTree(newRoot),
     });
 
     get().saveHistory();
@@ -165,8 +180,12 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     const { root } = get();
     if (!root) return null;
 
-    const component = findNodeById(root, id);
-    const parent = findParentNode(root, id);
+    // Clone tree FIRST
+    const newRoot = cloneNode(root);
+
+    // Find component and parent in the NEW tree
+    const component = findNodeById(newRoot, id);
+    const parent = findParentNode(newRoot, id);
     if (!component || !parent) return null;
 
     const cloned = cloneNode(component);
@@ -185,8 +204,8 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     parent.children.splice(index + 1, 0, cloned);
 
     set({
-      root: { ...root },
-      components: flattenTree(root),
+      root: newRoot,
+      components: flattenTree(newRoot),
     });
 
     get().saveHistory();

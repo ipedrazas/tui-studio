@@ -1,305 +1,245 @@
-# Contributing to TUI Designer
+# Contributing to ASCII Motion
 
-Thank you for your interest in contributing to TUI Designer! 🎉
+Thank you for your interest in contributing to ASCII Motion! We welcome contributions to the **open-source core** of the project.
 
-## 📋 Getting Started
+## 🎯 What Can I Contribute?
 
-### 1. Read the Documentation
+### ✅ Accepted Contributions (MIT License)
 
-Before contributing, please read:
-- [README.md](./README.md) - Project overview
-- [docs/TUI_DESIGNER_OVERVIEW.md](./docs/TUI_DESIGNER_OVERVIEW.md) - Detailed vision
-- [docs/TUI_DESIGNER_IMPLEMENTATION_PLAN.md](./docs/TUI_DESIGNER_IMPLEMENTATION_PLAN.md) - Technical roadmap
+**Drawing Tools & Features:**
+- New drawing tools (spray, line, polygon, etc.)
+- Tool improvements (brush smoothing, better fill algorithm)
+- Effect additions (blur, sharpen, dithering patterns)
 
-### 2. Set Up Development Environment
+**Animation Features:**
+- Timeline improvements
+- Onion skinning enhancements
+- Frame interpolation
 
-```bash
-# Fork and clone the repository
-git clone https://github.com/yourusername/tui-designer.git
-cd tui-designer
+**Export Features:**
+- New export formats
+- Export quality improvements
+- Batch export capabilities
 
-# Install dependencies (once project is initialized)
-npm install
+**UI/UX:**
+- Component improvements
+- Accessibility enhancements
+- Keyboard shortcuts
+- Color picker improvements
 
-# Start development server
-npm run dev
-```
+**Performance:**
+- Rendering optimizations
+- Memory usage improvements
+- Large canvas handling
 
-## 🎯 Ways to Contribute
+**Documentation:**
+- Code documentation
+- User guides
+- Tutorial content
 
-### Code Contributions
-- Implement features from the [Implementation Plan](./docs/TUI_DESIGNER_IMPLEMENTATION_PLAN.md)
-- Fix bugs
-- Improve performance
-- Add tests
-- Refactor code
+### ❌ Not Accepted (Proprietary)
 
-### Non-Code Contributions
-- Write documentation
-- Create tutorials and examples
-- Design templates
-- Build component libraries
-- Report bugs
-- Suggest features
+These features are closed-source and not accepting external contributions:
 
-## 🏗️ Development Workflow
+- Authentication system
+- Cloud storage integration
+- Payment processing
+- User account management
+- Premium feature gating
 
-### 1. Pick a Task
+## 🚀 Getting Started
 
-Check the [Implementation Plan](./docs/TUI_DESIGNER_IMPLEMENTATION_PLAN.md) for tasks:
-- Look for unchecked `[ ]` items
-- Start with Phase 1 or 2 if you're new
-- Complex features (Phases 3+) need more context
+1. **Fork the repository**
 
-### 2. Create a Branch
+2. **Clone your fork:**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/Ascii-Motion.git
+   cd Ascii-Motion
+   ```
 
-```bash
-git checkout -b feature/your-feature-name
-# or
-git checkout -b fix/bug-description
-```
+3. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-Branch naming:
-- `feature/*` - New features
-- `fix/*` - Bug fixes
-- `docs/*` - Documentation
-- `refactor/*` - Code refactoring
-- `test/*` - Adding tests
+4. **Create a feature branch:**
+   ```bash
+   git checkout -b feature/my-new-tool
+   ```
 
-### 3. Write Code
+5. **Make your changes in `packages/core/src/`**
 
-Follow these guidelines:
-- Use TypeScript with strict types
-- Follow the existing file structure
-- Write clear, self-documenting code
-- Add comments for complex logic
-- Use meaningful variable names
+6. **Add license header to new files:**
+   ```typescript
+   /**
+    * ASCII Motion - Open Source ASCII Art Editor
+    * 
+    * @license MIT
+    * @copyright 2025 ASCII Motion
+    * @see LICENSE-MIT for full license text
+    */
+   ```
 
-#### Code Style
+7. **Test your changes:**
+   ```bash
+   npm run dev
+   npm run build
+   ```
 
-```typescript
-// ✅ Good - Clear types, descriptive names
-interface ComponentNode {
-  id: string;
-  type: ComponentType;
-  name: string;
-}
+8. **Commit and push:**
+   ```bash
+   git add .
+   git commit -m "feat: Add polygon drawing tool"
+   git push origin feature/my-new-tool
+   ```
 
-function addComponent(node: ComponentNode): void {
-  // Implementation
-}
+9. **Open a Pull Request**
 
-// ❌ Bad - Unclear types, vague names
-function add(n: any) {
-  // Implementation
-}
-```
+## 📝 Coding Guidelines
 
-#### File Organization
+### File Organization
 
-```
-src/
-├── components/
-│   ├── editor/
-│   │   └── Canvas.tsx          # PascalCase for components
-│   └── ui/
-│       └── Button.tsx
-├── stores/
-│   └── componentStore.ts       # camelCase for stores
-├── types/
-│   └── components.ts           # lowercase for type files
-└── utils/
-    └── layoutEngine.ts         # camelCase for utilities
-```
+- Place new tools in `packages/core/src/components/tools/`
+- Place new hooks in `packages/core/src/hooks/`
+- Place utilities in `packages/core/src/utils/`
 
-### 4. Test Your Changes
+### TypeScript
 
-```bash
-# Run tests (once test suite exists)
-npm test
+- Use strict TypeScript (no `any` types)
+- Export all public APIs
+- Document complex functions with JSDoc comments
 
-# Run linter
-npm run lint
+### Code Style
 
-# Build to verify no errors
-npm run build
-```
+- Use functional components with hooks
+- Follow existing naming conventions
+- Use Zustand for state management
+- Use Tailwind CSS for styling
 
-### 5. Commit Your Changes
-
-Use conventional commit messages:
-
-```bash
-git commit -m "feat: add drag-and-drop for components"
-git commit -m "fix: resolve layout calculation bug"
-git commit -m "docs: update quick start guide"
-git commit -m "refactor: simplify component store logic"
-```
-
-Commit message format:
-```
-<type>: <description>
-
-[optional body]
-
-[optional footer]
-```
-
-Types:
-- `feat` - New feature
-- `fix` - Bug fix
-- `docs` - Documentation
-- `style` - Formatting (no code change)
-- `refactor` - Code restructuring
-- `test` - Adding tests
-- `chore` - Maintenance tasks
-
-### 6. Push and Create Pull Request
-
-```bash
-git push origin feature/your-feature-name
-```
-
-Then open a Pull Request on GitHub with:
-- Clear title describing the change
-- Description explaining what and why
-- Reference to any related issues
-- Screenshots/videos if UI changes
-
-#### Pull Request Template
-
-```markdown
-## Description
-Brief description of changes
-
-## Type of Change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Breaking change
-- [ ] Documentation update
-
-## Testing
-How did you test this?
-
-## Checklist
-- [ ] Code follows project style
-- [ ] Tests pass
-- [ ] Documentation updated
-- [ ] No new warnings
-```
-
-## 🎨 Design Guidelines
-
-### Component Design
-- Follow Figma-style patterns
-- Keep components simple and focused
-- Support all common TUI use cases
-- Ensure accessibility
-
-### UI/UX Principles
-- Dark mode first (terminal aesthetic)
-- Keyboard shortcuts for everything
-- Clear visual feedback
-- Consistent spacing and alignment
-
-## 📝 Documentation Guidelines
-
-### Code Documentation
+### Example: Adding a New Tool
 
 ```typescript
 /**
- * Adds a component to the component tree
- *
- * @param parentId - ID of the parent component
- * @param component - Component to add
- * @returns The ID of the newly added component
+ * ASCII Motion - Open Source ASCII Art Editor
+ * 
+ * @license MIT
+ * @copyright 2025 ASCII Motion
+ * @see LICENSE-MIT for full license text
  */
-function addComponent(
-  parentId: string,
-  component: ComponentNode
-): string {
-  // Implementation
+
+import { useCanvasStore } from '@/stores/canvasStore';
+import { useToolStore } from '@/stores/toolStore';
+
+export function MyNewTool() {
+  const { cells, setCells } = useCanvasStore();
+  const { selectedColor } = useToolStore();
+
+  const handleClick = (x: number, y: number) => {
+    // Your tool logic here
+  };
+
+  return (
+    <button onClick={() => handleClick(0, 0)}>
+      My Tool
+    </button>
+  );
 }
 ```
 
-### Markdown Documentation
+## 🧪 Testing
 
-- Use clear, concise language
-- Include code examples
-- Add screenshots for UI features
-- Keep it up to date
+Before submitting a PR:
 
-## 🐛 Bug Reports
+- [ ] Run `npm run dev` - Verify no console errors
+- [ ] Test your feature manually
+- [ ] Test with different canvas sizes
+- [ ] Test with multiple frames (if animation-related)
+- [ ] Verify exports still work
+- [ ] Check license headers: `npm run check-licenses`
 
-When reporting bugs, include:
-1. **Description** - What happened?
-2. **Steps to Reproduce** - How to trigger the bug?
-3. **Expected Behavior** - What should happen?
-4. **Actual Behavior** - What actually happened?
-5. **Environment** - OS, Node version, browser
-6. **Screenshots** - If applicable
+## 📋 Pull Request Guidelines
 
-## 💡 Feature Requests
+### PR Title Format
 
-When suggesting features, include:
-1. **Problem** - What problem does this solve?
-2. **Solution** - Your proposed solution
-3. **Alternatives** - Other approaches considered
-4. **Use Cases** - Who would use this?
-5. **Examples** - Similar features in other tools
+Use conventional commits:
+
+- `feat: Add spray tool`
+- `fix: Correct fill algorithm overflow`
+- `docs: Update tool documentation`
+- `refactor: Simplify canvas rendering`
+- `perf: Optimize animation playback`
+
+### PR Description
+
+Include:
+
+1. **What** - What does this PR do?
+2. **Why** - Why is this change needed?
+3. **How** - How does it work?
+4. **Testing** - How did you test it?
+5. **Screenshots** - For UI changes (optional but helpful)
+
+### Example PR Description
+
+```markdown
+## Add Polygon Drawing Tool
+
+### What
+Adds a polygon tool that lets users draw multi-point shapes.
+
+### Why
+Users requested a polygon tool for creating geometric ASCII art.
+
+### How
+- Click to add points
+- Double-click or press Enter to close the polygon
+- Uses line drawing algorithm between points
+
+### Testing
+- [x] Tested with 3-10 point polygons
+- [x] Tested closing polygon
+- [x] Tested with different colors
+- [x] Tested undo/redo
+- [x] Verified exports work
+
+### Screenshots
+[Include screenshot of polygon tool in action]
+```
 
 ## 🔍 Code Review Process
 
-### For Contributors
-- Expect feedback and iteration
-- Be open to suggestions
-- Respond to comments promptly
-- Keep PRs focused and small
+1. **Automated Checks** - Must pass:
+   - License header check
+   - TypeScript compilation
+   - Linting
 
-### For Reviewers
-- Be respectful and constructive
-- Explain the "why" behind suggestions
-- Approve or request changes clearly
-- Test the changes locally
+2. **Manual Review** - Maintainers will check:
+   - Code quality
+   - Consistency with existing code
+   - Feature completeness
+   - Documentation
 
-## 🎓 Learning Resources
+3. **Feedback** - We'll provide constructive feedback
 
-### TypeScript
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-- [TypeScript Deep Dive](https://basarat.gitbook.io/typescript/)
-
-### React
-- [React Documentation](https://react.dev/)
-- [React TypeScript Cheatsheet](https://react-typescript-cheatsheet.netlify.app/)
-
-### Zustand
-- [Zustand Documentation](https://github.com/pmndrs/zustand)
-
-### TUI Frameworks
-- [OpenTUI](https://opentui.js.org/)
-- [Ink](https://github.com/vadimdemedes/ink)
-- [BubbleTea](https://github.com/charmbracelet/bubbletea)
-
-## 📞 Getting Help
-
-- **Questions**: [GitHub Discussions](https://github.com/yourusername/tui-designer/discussions)
-- **Bugs**: [GitHub Issues](https://github.com/yourusername/tui-designer/issues)
-- **Chat**: Discord (coming soon)
-
-## 📜 Code of Conduct
-
-- Be respectful and inclusive
-- Welcome newcomers
-- Give constructive feedback
-- Focus on what's best for the project
-- Assume good intentions
+4. **Merge** - Once approved, your PR will be merged!
 
 ## 🎉 Recognition
 
 Contributors will be:
-- Listed in README.md
-- Credited in release notes
-- Mentioned in announcements
-- Given contributor badge
+- Listed in release notes
+- Credited in documentation
+- Added to contributors list
 
-Thank you for contributing to TUI Designer! 🚀
+## ❓ Questions?
+
+- Open an issue for questions
+- Check existing documentation
+- See [docs/](./docs/) for technical guides
+
+## 📜 License Agreement
+
+By contributing, you agree that your contributions will be licensed under the MIT License (for `packages/core/` code).
+
+---
+
+Thank you for contributing to ASCII Motion! 🎨

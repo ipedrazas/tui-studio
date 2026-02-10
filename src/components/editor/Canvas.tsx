@@ -1,6 +1,6 @@
 // Main canvas for displaying the TUI design
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { useCanvasStore, useComponentStore, useSelectionStore } from '../../stores';
 import { layoutEngine } from '../../utils/layout';
 import { dragStore } from '../../hooks/useDragAndDrop';
@@ -30,9 +30,12 @@ export function Canvas() {
   const viewportWidth = canvasWidth * cellWidth * canvasZoom;
   const viewportHeight = canvasHeight * cellHeight * canvasZoom;
 
-  // Calculate layout whenever components or canvas size changes
-  useEffect(() => {
+  // Calculate layout SYNCHRONOUSLY before paint to avoid flicker
+  // useLayoutEffect runs before browser paint, ensuring layout is ready when rendering
+  useLayoutEffect(() => {
+    console.log('⚡ Calculating layout for root:', root ? `${root.id} with ${root.children.length} children` : 'null');
     layoutEngine.calculateLayout(root, canvasWidth, canvasHeight);
+    console.log('✅ Layout calculation complete');
   }, [root, canvasWidth, canvasHeight]);
 
   const handleDragOver = (e: React.DragEvent) => {

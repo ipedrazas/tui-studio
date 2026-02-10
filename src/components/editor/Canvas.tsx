@@ -7,8 +7,12 @@ import { dragStore } from '../../hooks/useDragAndDrop';
 import { COMPONENT_LIBRARY } from '../../constants/components';
 
 export function Canvas() {
+  console.log('🎨 Canvas component mounted/rendering');
+
   // Use Zustand selectors for proper reactivity
   const root = useComponentStore(state => state.root);
+  console.log('📦 Current root:', root ? `ID: ${root.id}, Children: ${root.children.length}` : 'null');
+
   const addComponent = useComponentStore(state => state.addComponent);
   const setRoot = useComponentStore(state => state.setRoot);
 

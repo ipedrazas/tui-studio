@@ -59,15 +59,23 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
 
   // Add component
   addComponent: (parentId, componentData, index) => {
+    console.log('➕ addComponent called:', { parentId, type: componentData.type, name: componentData.name });
     const { root } = get();
-    if (!root) return '';
+    if (!root) {
+      console.log('❌ No root found');
+      return '';
+    }
 
     // Clone tree FIRST to create new references
     const newRoot = cloneNode(root);
+    console.log('✅ Tree cloned, old root ID:', root.id, 'new root ID:', newRoot.id);
 
     // Find parent in the NEW tree
     const parent = findNodeById(newRoot, parentId);
-    if (!parent) return '';
+    if (!parent) {
+      console.log('❌ Parent not found:', parentId);
+      return '';
+    }
 
     const id = generateComponentId();
     const newComponent: ComponentNode = {
@@ -83,10 +91,15 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
       parent.children.push(newComponent);
     }
 
+    console.log('✅ Component added with ID:', id, 'Parent now has', parent.children.length, 'children');
+    console.log('🔄 Calling set() with new root');
+
     set({
       root: newRoot,
       components: flattenTree(newRoot),
     });
+
+    console.log('✅ Store updated, new root reference:', newRoot === root ? 'SAME (BAD!)' : 'DIFFERENT (GOOD!)');
 
     get().saveHistory();
     return id;

@@ -1097,6 +1097,9 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRende
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          padding: node.layout.padding !== undefined
+            ? `${node.layout.padding * cellHeight * zoom}px ${node.layout.padding * cellWidth * zoom}px`
+            : undefined,
         }}
         onClick={(e) => {
           e.stopPropagation();

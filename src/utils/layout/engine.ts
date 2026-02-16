@@ -330,8 +330,9 @@ export class LayoutEngine {
         const iconRight = (node.props.iconRightEnabled && node.props.iconRight) ? (node.props.iconRight as string) : '';
         const number = node.props.number as number | undefined;
         const separated = node.props.separated as boolean;
+        const padding = typeof node.layout.padding === 'number' ? node.layout.padding : 1;
 
-        let contentWidth = label.length + 2; // +2 for side padding
+        let contentWidth = label.length + (padding * 2); // padding on both sides
 
         // Add left icon/key
         if (iconLeft) {

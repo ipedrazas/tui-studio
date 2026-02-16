@@ -84,6 +84,18 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
       children: [],
     };
 
+    // If parent is a container and has explicit height/width, change to auto so it fits children
+    if (['Box', 'Flexbox', 'Grid', 'Stack'].includes(parent.type)) {
+      if (typeof parent.props.height === 'number') {
+        console.log(`📏 Auto-sizing: Changing ${parent.type} "${parent.name}" height from ${parent.props.height} to 'auto'`);
+        parent.props.height = 'auto';
+      }
+      if (typeof parent.props.width === 'number' && parent.layout.direction !== 'column') {
+        console.log(`📏 Auto-sizing: Changing ${parent.type} "${parent.name}" width from ${parent.props.width} to 'auto'`);
+        parent.props.width = 'auto';
+      }
+    }
+
     // Insert at index or append in the NEW tree
     if (index !== undefined) {
       parent.children.splice(index, 0, newComponent);

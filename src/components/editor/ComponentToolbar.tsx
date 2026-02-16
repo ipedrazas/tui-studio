@@ -138,6 +138,7 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [customPosition, setCustomPosition] = useState<ToolbarCoordinates | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<'below' | 'above'>('below');
   const [isDockedState, setIsDockedState] = useState(() => {
     const saved = localStorage.getItem('toolbar-docked');
     return saved ? JSON.parse(saved) : docked;
@@ -145,6 +146,7 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const dragStartPos = useRef<{ x: number; y: number; toolbarX: number; toolbarY: number } | null>(null);
 
   // Save docked state to localStorage and notify other components
@@ -337,6 +339,10 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
     if (openDropdown === groupId) {
       setOpenDropdown(null);
     } else {
+      // Calculate dropdown position based on available space
+      const buttonElement = buttonRefs.current[groupId];
+      const position = getDropdownPosition(buttonElement);
+      setDropdownPosition(position === 'top' ? 'above' : 'below');
       setOpenDropdown(groupId);
     }
   };
@@ -404,10 +410,21 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
           const isActive = activeGroup === group.id;
 
           return (
-            <div key={group.id} className="relative" ref={isOpen ? dropdownRef : null}>
+            <div
+              key={group.id}
+              className="relative"
+              ref={(el) => {
+                if (isOpen) {
+                  (dropdownRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+                }
+                buttonRefs.current[group.id] = el;
+              }}
+            >
               {/* Dropdown Menu */}
               {isOpen && (
-                <div className="absolute top-full left-0 mt-2 min-w-[180px] bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50">
+                <div className={`absolute left-0 min-w-[180px] bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50 ${
+                  dropdownPosition === 'above' ? 'bottom-full mb-2' : 'top-full mt-2'
+                }`}>
                   <div className="py-1">
                     {group.items.map((item) => (
                       <button
@@ -461,7 +478,9 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
         {/* Settings for docked mode */}
         <div className="relative ml-1 pl-2 border-l border-border" ref={settingsRef}>
           {showSettings && (
-            <div className="absolute top-full left-0 mt-2 min-w-[160px] bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50">
+            <div className={`absolute left-0 min-w-[160px] bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50 ${
+              dropdownPosition === 'above' ? 'bottom-full mb-2' : 'top-full mt-2'
+            }`}>
               <div className="py-1">
                 <button
                   onClick={() => {
@@ -477,7 +496,12 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
           )}
 
           <button
-            onClick={() => setShowSettings(!showSettings)}
+            onClick={() => {
+              // Calculate position when opening settings
+              const position = getDropdownPosition(settingsRef.current);
+              setDropdownPosition(position === 'top' ? 'above' : 'below');
+              setShowSettings(!showSettings);
+            }}
             className={`flex items-center gap-1 px-2 py-1.5 rounded transition-colors ${
               showSettings ? 'bg-accent' : 'hover:bg-accent'
             }`}

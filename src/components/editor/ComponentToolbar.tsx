@@ -412,7 +412,7 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
                     {group.items.map((item) => (
                       <button
                         key={item.type}
-                        onClick={() => handleComponentClick(item.type, group.id)}
+                        onClick={() => addComponentDirectly(item.type, group.id)}
                         draggable
                         onDragStart={() => {
                           dragStore.startDrag({
@@ -520,7 +520,7 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
                     {group.items.map((item) => (
                       <button
                         key={item.type}
-                        onClick={() => handleComponentClick(item.type, group.id)}
+                        onClick={() => addComponentDirectly(item.type, group.id)}
                         draggable
                         onDragStart={() => {
                           dragStore.startDrag({

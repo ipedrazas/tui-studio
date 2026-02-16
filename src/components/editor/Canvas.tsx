@@ -1,12 +1,13 @@
 // Main canvas for displaying the TUI design
 
-import { useEffect, useState } from 'react';
-import { useCanvasStore, useComponentStore, useSelectionStore, useThemeStore } from '../../stores';
+import { useEffect, useState, useRef } from 'react';
+import { useCanvasStore, useComponentStore, useSelectionStore } from '../../stores';
 import { layoutEngine } from '../../utils/layout';
 import { dragStore } from '../../hooks/useDragAndDrop';
 import { COMPONENT_LIBRARY, canHaveChildren } from '../../constants/components';
 import { THEMES } from '../../stores/themeStore';
 import type { ComponentNode } from '../../types';
+import { ComponentToolbar } from './ComponentToolbar';
 
 // Helper to find the active theme for a component by walking up the tree
 function findComponentTheme(node: ComponentNode, componentStore: any): string {
@@ -37,6 +38,74 @@ export function Canvas() {
   console.log('📦 Current root:', root ? `ID: ${root.id}, Children: ${root.children.length}` : 'null');
 
   const [isDragOver, setIsDragOver] = useState(false);
+  const [offCanvasWarning, setOffCanvasWarning] = useState<string | null>(null);
+  const [isToolbarDocked, setIsToolbarDocked] = useState(() =>
+    JSON.parse(localStorage.getItem('toolbar-docked') || 'false')
+  );
+  const viewportRef = useRef<HTMLDivElement>(null);
+
+  // Listen for toolbar dock state changes
+  useEffect(() => {
+    const handleDockedChange = () => {
+      setIsToolbarDocked(JSON.parse(localStorage.getItem('toolbar-docked') || 'false'));
+    };
+    window.addEventListener('toolbar-docked-changed', handleDockedChange);
+    return () => window.removeEventListener('toolbar-docked-changed', handleDockedChange);
+  }, []);
+
+  // Responsive canvas sizing
+  useEffect(() => {
+    if (canvasStore.sizeMode !== 'responsive') {
+      setOffCanvasWarning(null);
+      return;
+    }
+
+    const updateCanvasSize = () => {
+      if (!viewportRef.current) return;
+
+      // Get available space from the viewport container
+      // The p-4 class adds 16px padding on each side
+      // Also account for the dropdown selector at the bottom (~40px)
+      const availableWidth = viewportRef.current.clientWidth - 32; // minus 2*16px padding
+      const availableHeight = viewportRef.current.clientHeight - 72; // minus padding + dropdown space
+
+      const cellWidth = 8;
+      const cellHeight = 16;
+
+      // Calculate columns and rows that fit
+      const cols = Math.floor(availableWidth / (cellWidth * canvasStore.zoom));
+      const rows = Math.floor(availableHeight / (cellHeight * canvasStore.zoom));
+
+      // Update canvas size
+      canvasStore.setCanvasSize(
+        Math.max(10, Math.min(200, cols)),
+        Math.max(10, Math.min(100, rows))
+      );
+
+      // Check for off-canvas elements
+      if (root) {
+        layoutEngine.calculateLayout(root, cols, rows);
+        const allLayouts = layoutEngine.getAllLayouts();
+
+        let hasOffCanvas = false;
+        allLayouts.forEach((layout, nodeId) => {
+          if (layout.x + layout.width > cols || layout.y + layout.height > rows) {
+            hasOffCanvas = true;
+          }
+        });
+
+        if (hasOffCanvas) {
+          setOffCanvasWarning('Some elements are outside the visible canvas area');
+        } else {
+          setOffCanvasWarning(null);
+        }
+      }
+    };
+
+    updateCanvasSize();
+    window.addEventListener('resize', updateCanvasSize);
+    return () => window.removeEventListener('resize', updateCanvasSize);
+  }, [canvasStore.sizeMode, canvasStore.zoom, root]);
 
   // Keyboard navigation for selected components
   useEffect(() => {
@@ -203,7 +272,10 @@ export function Canvas() {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-muted/20 overflow-auto p-8">
+    <div ref={viewportRef} className="flex-1 h-full flex items-center justify-center bg-muted/20 overflow-hidden p-4 relative">
+      {/* Figma-style Component Toolbar - Only show if not docked */}
+      {!isToolbarDocked && <ComponentToolbar />}
+
       <div className="relative" style={{ width: viewportWidth, height: viewportHeight }}>
         {/* Canvas Background */}
         <div
@@ -268,10 +340,31 @@ export function Canvas() {
           )}
         </div>
 
-        {/* Canvas Info */}
-        <div className="absolute -bottom-6 left-0 text-xs text-muted-foreground">
-          {canvasStore.width}×{canvasStore.height} cols/rows
+        {/* Canvas Size Selector */}
+        <div className="absolute -bottom-8 left-0 flex items-center gap-2">
+          <select
+            value={canvasStore.sizeMode}
+            onChange={(e) => canvasStore.setSizeMode(e.target.value as any)}
+            className="px-2 py-0.5 text-[11px] bg-card border border-border/50 rounded focus:border-primary focus:outline-none"
+          >
+            <option value="default">Default (80×25)</option>
+            <option value="responsive">Responsive</option>
+          </select>
+
+          <span className="text-[10px] text-muted-foreground/60">
+            {canvasStore.width}×{canvasStore.height}
+          </span>
         </div>
+
+        {/* Off-canvas Warning */}
+        {offCanvasWarning && (
+          <div className="absolute -bottom-14 left-0 right-0 flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded text-yellow-500 text-[10px]">
+            <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            {offCanvasWarning}
+          </div>
+        )}
       </div>
     </div>
   );

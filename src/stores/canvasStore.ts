@@ -2,10 +2,13 @@
 
 import { create } from 'zustand';
 
+export type CanvasSizeMode = 'default' | 'responsive';
+
 interface CanvasState {
   // Dimensions (in terminal columns/rows)
   width: number;
   height: number;
+  sizeMode: CanvasSizeMode;
 
   // View
   zoom: number;    // 1.0 = 100%
@@ -19,6 +22,7 @@ interface CanvasState {
 
   // Actions
   setCanvasSize: (width: number, height: number) => void;
+  setSizeMode: (mode: CanvasSizeMode) => void;
   setZoom: (zoom: number) => void;
   setPan: (x: number, y: number) => void;
   resetView: () => void;
@@ -30,7 +34,8 @@ interface CanvasState {
 export const useCanvasStore = create<CanvasState>((set) => ({
   // Initial state - default terminal size
   width: 80,
-  height: 24,
+  height: 25,
+  sizeMode: 'default',
   zoom: 1.0,
   panX: 0,
   panY: 0,
@@ -43,6 +48,18 @@ export const useCanvasStore = create<CanvasState>((set) => ({
     set({
       width: Math.max(10, Math.min(200, width)),
       height: Math.max(10, Math.min(100, height)),
+    });
+  },
+
+  // Set size mode
+  setSizeMode: (mode) => {
+    set((state) => {
+      if (mode === 'default') {
+        return { sizeMode: mode, width: 80, height: 25 };
+      } else if (mode === 'responsive') {
+        return { sizeMode: mode };
+      }
+      return { sizeMode: mode };
     });
   },
 

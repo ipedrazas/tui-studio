@@ -1,11 +1,116 @@
 // Hierarchical component tree view
 
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Eye, EyeOff, Lock, Unlock } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Lock,
+  Unlock,
+  Square,
+  LayoutGrid,
+  Columns,
+  Layers as LayersIcon,
+  Space,
+  MousePointerClick,
+  Type,
+  CheckSquare,
+  Circle,
+  ChevronDown as SelectIcon,
+  ToggleLeft,
+  FileText,
+  Tag,
+  Loader2,
+  Activity,
+  Table2,
+  List,
+  GitBranch,
+  Menu as MenuIconType,
+  FolderTree,
+  Navigation,
+  PanelTop,
+  MessageSquare,
+  Info,
+} from 'lucide-react';
 import { useComponentStore, useSelectionStore } from '../../stores';
-import type { ComponentNode } from '../../types';
+import type { ComponentNode, ComponentType } from '../../types';
 import { dragStore } from '../../hooks/useDragAndDrop';
 import { COMPONENT_LIBRARY, canHaveChildren } from '../../constants/components';
+
+// Map component types to their icons
+function getComponentIcon(type: ComponentType) {
+  const iconProps = { className: 'w-3.5 h-3.5 flex-shrink-0' };
+
+  switch (type) {
+    // Layout
+    case 'Screen':
+      return <PanelTop {...iconProps} />;
+    case 'Box':
+      return <Square {...iconProps} />;
+    case 'Flexbox':
+      return <LayoutGrid {...iconProps} />;
+    case 'Grid':
+      return <Columns {...iconProps} />;
+    case 'Stack':
+      return <LayersIcon {...iconProps} />;
+    case 'Spacer':
+      return <Space {...iconProps} />;
+
+    // Input
+    case 'Button':
+      return <MousePointerClick {...iconProps} />;
+    case 'TextInput':
+      return <Type {...iconProps} />;
+    case 'Checkbox':
+      return <CheckSquare {...iconProps} />;
+    case 'Radio':
+      return <Circle {...iconProps} />;
+    case 'Select':
+      return <SelectIcon {...iconProps} />;
+    case 'Toggle':
+      return <ToggleLeft {...iconProps} />;
+
+    // Display
+    case 'Text':
+      return <FileText {...iconProps} />;
+    case 'Label':
+      return <Tag {...iconProps} />;
+    case 'Badge':
+      return <Tag {...iconProps} />;
+    case 'Spinner':
+      return <Loader2 {...iconProps} />;
+    case 'ProgressBar':
+      return <Activity {...iconProps} />;
+
+    // Data
+    case 'Table':
+      return <Table2 {...iconProps} />;
+    case 'List':
+      return <List {...iconProps} />;
+    case 'Tree':
+      return <GitBranch {...iconProps} />;
+
+    // Navigation
+    case 'Menu':
+      return <MenuIconType {...iconProps} />;
+    case 'Tabs':
+      return <FolderTree {...iconProps} />;
+    case 'Breadcrumb':
+      return <Navigation {...iconProps} />;
+
+    // Overlay
+    case 'Modal':
+      return <PanelTop {...iconProps} />;
+    case 'Popover':
+      return <MessageSquare {...iconProps} />;
+    case 'Tooltip':
+      return <Info {...iconProps} />;
+
+    default:
+      return <Square {...iconProps} />;
+  }
+}
 
 export function ComponentTree() {
   const componentStore = useComponentStore();
@@ -232,12 +337,12 @@ function TreeNode({ node, level }: { node: ComponentNode; level: number }) {
           <div className="w-4" />
         )}
 
-        {/* Type & Name */}
+        {/* Icon & Name */}
         <div className="flex-1 flex items-center gap-2 min-w-0">
-          <span className="font-mono text-xs font-semibold text-cyan-400 flex-shrink-0">
-            {node.type}
+          <span className="text-muted-foreground">
+            {getComponentIcon(node.type)}
           </span>
-          <span className="text-sm truncate">{node.name}</span>
+          <span className="text-xs truncate">{node.name}</span>
         </div>
 
         {/* Actions */}

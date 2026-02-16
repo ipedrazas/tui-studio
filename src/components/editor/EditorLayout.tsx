@@ -31,7 +31,7 @@ export function EditorLayout({ toolbar, leftSidebar, canvas, rightSidebar, debug
             {canvas}
           </div>
           {debugPanel && (
-            <div className="h-48 flex-shrink-0 overflow-y-auto">
+            <div className="h-32 flex-shrink-0 overflow-y-auto">
               {debugPanel}
             </div>
           )}

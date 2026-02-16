@@ -1,17 +1,49 @@
-// Enhanced property panel with tabs
+// Compact Figma-style property panel with collapsible sections
 
 import { useState } from 'react';
-import { Settings, Layout, Palette, Zap, Trash2 } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, Trash2, Copy } from 'lucide-react';
 import { useSelectionStore, useComponentStore } from '../../stores';
 import { DimensionInput } from './DimensionInput';
 import { LayoutEditor } from './LayoutEditor';
 import { StyleEditor } from './StyleEditor';
 import { THEME_NAMES } from '../../stores/themeStore';
 
-type Tab = 'properties' | 'layout' | 'style' | 'events';
+// Collapsible Section Component
+function Section({
+  title,
+  defaultOpen = true,
+  children,
+  action
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="border-b border-border/30">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-accent/30 transition-colors"
+      >
+        <div className="flex items-center gap-1">
+          {isOpen ? (
+            <ChevronDown className="w-2.5 h-2.5 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="w-2.5 h-2.5 text-muted-foreground" />
+          )}
+          <span className="text-[11px] font-semibold">{title}</span>
+        </div>
+        {action}
+      </button>
+      {isOpen && <div className="px-3 py-2 space-y-2">{children}</div>}
+    </div>
+  );
+}
 
 export function PropertyPanel() {
-  const [activeTab, setActiveTab] = useState<Tab>('properties');
   const selectionStore = useSelectionStore();
   const componentStore = useComponentStore();
 
@@ -21,105 +53,178 @@ export function PropertyPanel() {
   if (!selectedComponent) {
     return (
       <div className="p-3">
-        <h2 className="text-xs font-semibold mb-3 text-muted-foreground uppercase">
-          Properties
-        </h2>
-        <div className="text-center text-xs text-muted-foreground py-6">
-          Select a component to edit its properties
+        <div className="text-center text-xs text-muted-foreground py-8">
+          Select a component
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="p-3 border-b border-border">
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase mb-0.5">
-          Properties
-        </h2>
-        <div className="text-[10px] text-muted-foreground">
-          {selectedComponent.type}
+      <div className="px-3 py-2 border-b border-border/30 flex items-center justify-between">
+        <div className="text-[11px] font-semibold truncate">{selectedComponent.name}</div>
+        <div className="flex gap-0.5">
+          <button
+            onClick={() => {
+              const id = componentStore.duplicateComponent(selectedComponent.id);
+              if (id) selectionStore.select(id);
+            }}
+            className="p-1 hover:bg-accent rounded transition-colors"
+            title="Duplicate"
+          >
+            <Copy className="w-3 h-3" />
+          </button>
+          <button
+            onClick={() => {
+              componentStore.removeComponent(selectedComponent.id);
+              selectionStore.clearSelection();
+            }}
+            className="p-1 hover:bg-destructive/10 text-destructive rounded transition-colors"
+            title="Delete"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-border text-xs">
-        <button
-          onClick={() => setActiveTab('properties')}
-          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors ${
-            activeTab === 'properties'
-              ? 'bg-background border-b-2 border-primary text-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-          }`}
-        >
-          <Settings className="w-3.5 h-3.5" />
-          Props
-        </button>
-        <button
-          onClick={() => setActiveTab('layout')}
-          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors ${
-            activeTab === 'layout'
-              ? 'bg-background border-b-2 border-primary text-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-          }`}
-        >
-          <Layout className="w-3.5 h-3.5" />
-          Layout
-        </button>
-        <button
-          onClick={() => setActiveTab('style')}
-          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors ${
-            activeTab === 'style'
-              ? 'bg-background border-b-2 border-primary text-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-          }`}
-        >
-          <Palette className="w-3.5 h-3.5" />
-          Style
-        </button>
-        <button
-          onClick={() => setActiveTab('events')}
-          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 transition-colors ${
-            activeTab === 'events'
-              ? 'bg-background border-b-2 border-primary text-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-          }`}
-        >
-          <Zap className="w-3.5 h-3.5" />
-          Events
-        </button>
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto">
+        <PropertiesContent component={selectedComponent} />
       </div>
+    </div>
+  );
+}
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-3">
-        {activeTab === 'properties' && <PropertiesTab component={selectedComponent} />}
-        {activeTab === 'layout' && <LayoutEditor component={selectedComponent} />}
-        {activeTab === 'style' && <StyleEditor component={selectedComponent} />}
-        {activeTab === 'events' && <EventsTab component={selectedComponent} />}
-      </div>
+// Compact properties content with collapsible sections
+function PropertiesContent({ component }: { component: import('../../types').ComponentNode }) {
+  const componentStore = useComponentStore();
 
-      {/* Actions */}
-      <div className="p-3 border-t border-border space-y-1.5">
-        <button
-          onClick={() => {
-            const id = componentStore.duplicateComponent(selectedComponent.id);
-            if (id) selectionStore.select(id);
-          }}
-          className="w-full px-2 py-1.5 bg-secondary hover:bg-secondary/80 rounded text-xs font-medium"
-        >
-          Duplicate Component
-        </button>
-        <button
-          onClick={() => {
-            componentStore.removeComponent(selectedComponent.id);
-            selectionStore.clearSelection();
-          }}
-          className="w-full px-2 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium"
-        >
-          Delete Component
-        </button>
-      </div>
+  return (
+    <>
+      {/* Dimensions Section */}
+      <Section title="Dimensions" defaultOpen={true}>
+        <div className="grid grid-cols-2 gap-1.5">
+          <div>
+            <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">W</label>
+            <input
+              type="text"
+              value={component.props.width || 'auto'}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, {
+                  width: e.target.value === 'auto' ? 'auto' : Number(e.target.value) || 'auto'
+                })
+              }
+              className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">H</label>
+            <input
+              type="text"
+              value={component.props.height || 'auto'}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, {
+                  height: e.target.value === 'auto' ? 'auto' : Number(e.target.value) || 'auto'
+                })
+              }
+              className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* Layout Section */}
+      <Section title="Layout" defaultOpen={true}>
+        <LayoutEditor component={component} />
+      </Section>
+
+      {/* Appearance Section */}
+      <Section title="Appearance" defaultOpen={true}>
+        <StyleEditor component={component} />
+      </Section>
+
+      {/* Component-specific properties */}
+      <Section title="Properties" defaultOpen={true}>
+        <ComponentProps component={component} />
+      </Section>
+    </>
+  );
+}
+
+// Component-specific properties in compact format
+function ComponentProps({ component }: { component: import('../../types').ComponentNode }) {
+  const componentStore = useComponentStore();
+
+  return (
+    <div className="space-y-1.5">
+      {/* Text Content */}
+      {component.type === 'Text' && (
+        <div>
+          <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Content</label>
+          <textarea
+            value={(component.props.content as string) || ''}
+            onChange={(e) =>
+              componentStore.updateProps(component.id, { content: e.target.value })
+            }
+            rows={3}
+            className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] font-mono resize-none focus:border-primary focus:outline-none"
+          />
+        </div>
+      )}
+
+      {/* Button Label */}
+      {component.type === 'Button' && (
+        <div>
+          <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Label</label>
+          <input
+            type="text"
+            value={(component.props.label as string) || ''}
+            onChange={(e) =>
+              componentStore.updateProps(component.id, { label: e.target.value })
+            }
+            className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
+          />
+        </div>
+      )}
+
+      {/* TextInput Placeholder */}
+      {component.type === 'TextInput' && (
+        <div>
+          <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Placeholder</label>
+          <input
+            type="text"
+            value={(component.props.placeholder as string) || ''}
+            onChange={(e) =>
+              componentStore.updateProps(component.id, { placeholder: e.target.value })
+            }
+            className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
+          />
+        </div>
+      )}
+
+      {/* Theme for Screen */}
+      {component.type === 'Screen' && (
+        <div>
+          <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Theme</label>
+          <select
+            value={(component.props.theme as string) || 'dracula'}
+            onChange={(e) =>
+              componentStore.updateProps(component.id, { theme: e.target.value })
+            }
+            className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
+          >
+            {THEME_NAMES.map((theme) => (
+              <option key={theme.value} value={theme.value}>
+                {theme.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Add more component types as needed */}
     </div>
   );
 }

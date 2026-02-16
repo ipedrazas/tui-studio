@@ -82,7 +82,16 @@ export function calculateFlexboxLayout(
 
       layouts.set(item.id, createComputedLayout(x, y, width, height, 0, 0));
 
-      mainOffset += itemMainSize + gap + spacing;
+      // Add spacing: use justify-content spacing OR gap (not both)
+      // Only add gap if not the last item
+      const isLastItem = i === line.items.length - 1;
+      if (!isLastItem) {
+        if (justify === 'space-between' || justify === 'space-around') {
+          mainOffset += itemMainSize + spacing;
+        } else {
+          mainOffset += itemMainSize + gap;
+        }
+      }
     });
 
     crossOffset += lineCrossSize + gap;

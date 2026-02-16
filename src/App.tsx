@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import './App.css';
 import { EditorLayout } from './components/editor/EditorLayout';
 import { Toolbar } from './components/editor/Toolbar';
@@ -7,6 +8,11 @@ import { PropertyPanel } from './components/properties/PropertyPanel';
 import { LayoutDebugPanel } from './components/debug/LayoutDebugPanel';
 
 function App() {
+  // Enable dark mode
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
+
   return (
     <EditorLayout
       toolbar={<Toolbar />}

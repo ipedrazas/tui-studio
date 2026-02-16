@@ -105,6 +105,17 @@ export interface StyleProps {
   color?: string;        // Text/foreground color
   backgroundColor?: string;
 
+  // Checkbox colors
+  checkedColor?: string;
+  uncheckedColor?: string;
+
+  // Radio colors
+  selectedColor?: string;
+  unselectedColor?: string;
+
+  // Component label color
+  labelColor?: string;
+
   // Text
   bold?: boolean;
   italic?: boolean;

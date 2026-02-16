@@ -21,18 +21,44 @@ function App() {
     document.documentElement.classList.add('dark');
   }, []);
 
-  // Command palette keyboard shortcut (Ctrl/Cmd+P)
+  // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle shortcuts when typing in inputs
+      const target = e.target as HTMLElement;
+      const isTyping = target.tagName === 'INPUT' ||
+                      target.tagName === 'TEXTAREA' ||
+                      target.isContentEditable;
+
+      // Command palette (Ctrl/Cmd+P)
       if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
         e.preventDefault();
         setCommandPaletteOpen(true);
+        return;
+      }
+
+      // Delete selected component (Backspace or Delete)
+      if ((e.key === 'Backspace' || e.key === 'Delete') && !isTyping && !commandPaletteOpen) {
+        const selectedIds = Array.from(selectionStore.selectedIds);
+        if (selectedIds.length > 0) {
+          e.preventDefault();
+          // Delete all selected components that aren't root and aren't locked
+          selectedIds.forEach((selectedId) => {
+            if (selectedId !== 'root') {
+              const component = componentStore.getComponent(selectedId);
+              if (component && !component.locked) {
+                componentStore.removeComponent(selectedId);
+              }
+            }
+          });
+          selectionStore.clearSelection();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [commandPaletteOpen, componentStore, selectionStore]);
 
   // Handle adding component from command palette
   const handleAddComponent = (type: ComponentType) => {

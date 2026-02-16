@@ -422,6 +422,21 @@ export class LayoutEngine {
         return totalHeight + border;
       }
 
+      // For horizontal layouts (row direction), use max child height
+      if (node.layout.type === 'flexbox' && node.layout.direction === 'row') {
+        let maxHeight = 0;
+
+        node.children.forEach((child) => {
+          const childHeight = typeof child.props.height === 'number'
+            ? child.props.height
+            : this.calculateAutoHeight(child);
+
+          maxHeight = Math.max(maxHeight, childHeight);
+        });
+
+        return maxHeight + (padding * 2) + border;
+      }
+
       // For other layouts, use a reasonable default
       return 10 + border;
     }

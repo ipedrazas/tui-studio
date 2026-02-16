@@ -1082,6 +1082,8 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRende
         style={{
           left: `${x}px`,
           top: `${y}px`,
+          width: `${layout.width * cellWidth * zoom}px`,
+          height: `${layout.height * cellHeight * zoom}px`,
           color: getColor(node.style.color),
           backgroundColor: getColor(node.style.backgroundColor),
           fontWeight: node.style.bold ? 'bold' : 'normal',
@@ -1090,38 +1092,21 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRende
           opacity: isDragging ? 0.5 : (node.style.opacity ?? 1),
           fontSize: `${12 * zoom}px`,
           pointerEvents: node.locked ? 'none' : 'auto',
+          border: hasBorder ? `1px solid ${getColor(node.style.borderColor) || '#fff'}` : 'none',
+          boxSizing: 'border-box',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
         onClick={(e) => {
           e.stopPropagation();
           selectionStore.select(node.id);
         }}
       >
-        {hasBorder ? (
-          <div className="font-mono">
-            {/* Top border */}
-            <div>
-              {chars.tl}
-              {chars.h.repeat(Math.max(0, layout.width - 2))}
-              {chars.tr}
-            </div>
-            {/* Content - pad with spaces to match border width */}
-            <div>
-              {chars.v}
-              <span className={node.type === 'Button' ? 'font-bold' : ''}>
-                {padText(getTextContent(), layout.width - 2, 'center')}
-              </span>
-              {chars.v}
-            </div>
-            {/* Bottom border */}
-            <div>
-              {chars.bl}
-              {chars.h.repeat(Math.max(0, layout.width - 2))}
-              {chars.br}
-            </div>
-          </div>
-        ) : (
-          renderContent()
-        )}
+        {/* Render content - border is handled by CSS */}
+        <div className={node.type === 'Button' ? 'font-mono font-bold' : 'font-mono'}>
+          {getTextContent()}
+        </div>
 
         {/* Component label - only when selected, shows name + dimensions + position */}
         {isSelected && node.id !== 'root' && (

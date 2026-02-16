@@ -174,19 +174,89 @@ function ComponentProps({ component }: { component: import('../../types').Compon
         </div>
       )}
 
-      {/* Button Label */}
+      {/* Button Properties */}
       {component.type === 'Button' && (
-        <div>
-          <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Label</label>
-          <input
-            type="text"
-            value={(component.props.label as string) || ''}
-            onChange={(e) =>
-              componentStore.updateProps(component.id, { label: e.target.value })
-            }
-            className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
-          />
-        </div>
+        <>
+          <div>
+            <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Label</label>
+            <input
+              type="text"
+              value={(component.props.label as string) || ''}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { label: e.target.value })
+              }
+              className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              id="iconLeftEnabled"
+              checked={component.props.iconLeftEnabled as boolean || false}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { iconLeftEnabled: e.target.checked })
+              }
+              className="w-3 h-3"
+            />
+            <label htmlFor="iconLeftEnabled" className="text-[9px] text-muted-foreground uppercase tracking-wide">Left Icon</label>
+            <input
+              type="text"
+              value={(component.props.iconLeft as string) || ''}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { iconLeft: e.target.value })
+              }
+              disabled={!component.props.iconLeftEnabled}
+              className="flex-1 px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none disabled:opacity-50"
+              placeholder="+"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              id="iconRightEnabled"
+              checked={component.props.iconRightEnabled as boolean || false}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { iconRightEnabled: e.target.checked })
+              }
+              className="w-3 h-3"
+            />
+            <label htmlFor="iconRightEnabled" className="text-[9px] text-muted-foreground uppercase tracking-wide">Right Icon</label>
+            <input
+              type="text"
+              value={(component.props.iconRight as string) || ''}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { iconRight: e.target.value })
+              }
+              disabled={!component.props.iconRightEnabled}
+              className="flex-1 px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none disabled:opacity-50"
+              placeholder="→"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              id="separated"
+              checked={component.props.separated as boolean || false}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { separated: e.target.checked })
+              }
+              className="w-3 h-3"
+            />
+            <label htmlFor="separated" className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Separated (│)</label>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              id="disabled"
+              checked={component.props.disabled as boolean || false}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { disabled: e.target.checked })
+              }
+              className="w-3 h-3"
+            />
+            <label htmlFor="disabled" className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Disabled</label>
+          </div>
+        </>
       )}
 
       {/* TextInput Placeholder */}
@@ -224,7 +294,120 @@ function ComponentProps({ component }: { component: import('../../types').Compon
         </div>
       )}
 
-      {/* Add more component types as needed */}
+      {/* Checkbox Properties */}
+      {component.type === 'Checkbox' && (
+        <>
+          <div>
+            <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Label</label>
+            <input
+              type="text"
+              value={(component.props.label as string) || ''}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { label: e.target.value })
+              }
+              className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              id="checked"
+              checked={component.props.checked as boolean || false}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { checked: e.target.checked })
+              }
+              className="w-3 h-3"
+            />
+            <label htmlFor="checked" className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Checked</label>
+          </div>
+        </>
+      )}
+
+      {/* Radio Properties */}
+      {component.type === 'Radio' && (
+        <>
+          <div>
+            <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Label</label>
+            <input
+              type="text"
+              value={(component.props.label as string) || ''}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { label: e.target.value })
+              }
+              className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="checkbox"
+              id="checked"
+              checked={component.props.checked as boolean || false}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { checked: e.target.checked })
+              }
+              className="w-3 h-3"
+            />
+            <label htmlFor="checked" className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Selected</label>
+          </div>
+        </>
+      )}
+
+      {/* ProgressBar Properties */}
+      {component.type === 'ProgressBar' && (
+        <>
+          <div>
+            <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Value</label>
+            <input
+              type="number"
+              value={(component.props.value as number) || 0}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { value: Number(e.target.value) })
+              }
+              className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Max</label>
+            <input
+              type="number"
+              value={(component.props.max as number) || 100}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { max: Number(e.target.value) })
+              }
+              className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
+            />
+          </div>
+        </>
+      )}
+
+      {/* Select Properties */}
+      {component.type === 'Select' && (
+        <>
+          <div>
+            <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Value</label>
+            <input
+              type="text"
+              value={(component.props.value as string) || ''}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { value: e.target.value })
+              }
+              className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Options (comma separated)</label>
+            <input
+              type="text"
+              value={((component.props.options as string[]) || []).join(', ')}
+              onChange={(e) =>
+                componentStore.updateProps(component.id, { options: e.target.value.split(',').map(s => s.trim()) })
+              }
+              className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
+              placeholder="Option 1, Option 2, Option 3"
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

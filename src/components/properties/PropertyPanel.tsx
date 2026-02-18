@@ -5,7 +5,6 @@ import { ChevronRight, ChevronDown, Trash2, Copy, AlignLeft, AlignCenter, AlignR
 import { useSelectionStore, useComponentStore } from '../../stores';
 import { LayoutEditor } from './LayoutEditor';
 import { StyleEditor } from './StyleEditor';
-import { THEME_NAMES } from '../../stores/themeStore';
 
 // Collapsible Section Component
 function Section({
@@ -426,25 +425,6 @@ function ComponentProps({ component }: { component: import('../../types').Compon
         </div>
       )}
 
-      {/* Theme for Screen */}
-      {component.type === 'Screen' && (
-        <div>
-          <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Theme</label>
-          <select
-            value={(component.props.theme as string) || 'dracula'}
-            onChange={(e) =>
-              componentStore.updateProps(component.id, { theme: e.target.value })
-            }
-            className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
-          >
-            {THEME_NAMES.map((theme) => (
-              <option key={theme.value} value={theme.value}>
-                {theme.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
 
       {/* Checkbox Properties */}
       {component.type === 'Checkbox' && (

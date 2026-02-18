@@ -1,6 +1,6 @@
 // Hierarchical component tree view
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   ChevronDown,
   ChevronRight,
@@ -29,6 +29,7 @@ import {
   PanelTop,
   MessageSquare,
   Info,
+  AlertTriangle,
 } from 'lucide-react';
 import { useComponentStore, useSelectionStore } from '../../stores';
 import type { ComponentNode, ComponentType } from '../../types';
@@ -101,7 +102,7 @@ export function getComponentIcon(type: ComponentType) {
   }
 }
 
-export function ComponentTree() {
+export function ComponentTree({ warningNodeIds = new Set<string>() }: { warningNodeIds?: Set<string> }) {
   const componentStore = useComponentStore();
 
   if (!componentStore.root) {
@@ -114,18 +115,46 @@ export function ComponentTree() {
 
   return (
     <div className="p-2">
-      <TreeNode node={componentStore.root} level={0} />
+      <TreeNode node={componentStore.root} level={0} warningNodeIds={warningNodeIds} />
     </div>
   );
 }
 
-function TreeNode({ node, level }: { node: ComponentNode; level: number }) {
+function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level: number; warningNodeIds: Set<string> }) {
   const componentStore = useComponentStore();
   const selectionStore = useSelectionStore();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [insertionIndex, setInsertionIndex] = useState<number | null>(null);
   const [insertBefore, setInsertBefore] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(node.name);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const startEditing = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditName(node.name);
+    setIsEditing(true);
+  };
+
+  const commitEdit = () => {
+    const trimmed = editName.trim();
+    if (trimmed && trimmed !== node.name) {
+      componentStore.updateComponent(node.id, { name: trimmed });
+    }
+    setIsEditing(false);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditName(node.name);
+  };
 
   const isSelected = selectionStore.isSelected(node.id);
   const hasChildren = node.children.length > 0;
@@ -327,10 +356,34 @@ function TreeNode({ node, level }: { node: ComponentNode; level: number }) {
 
         {/* Icon & Name */}
         <div className="flex-1 flex items-center gap-2 min-w-0">
-          <span className="text-muted-foreground">
+          <span className="text-muted-foreground flex-shrink-0">
             {getComponentIcon(node.type)}
           </span>
-          <span className="text-xs truncate">{node.name}</span>
+          {warningNodeIds.has(node.id) && (
+            <AlertTriangle className="w-3 h-3 text-yellow-500 flex-shrink-0" title="Layout warning" />
+          )}
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onBlur={commitEdit}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); commitEdit(); }
+                if (e.key === 'Escape') { e.preventDefault(); cancelEdit(); }
+                e.stopPropagation();
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="flex-1 min-w-0 text-xs bg-background border border-primary rounded px-1 py-0 outline-none"
+            />
+          ) : (
+            <span
+              className="text-xs truncate"
+              onDoubleClick={startEditing}
+            >
+              {node.name}
+            </span>
+          )}
         </div>
 
         {/* Actions */}
@@ -366,7 +419,7 @@ function TreeNode({ node, level }: { node: ComponentNode; level: number }) {
       {hasChildren && !node.collapsed && (
         <div>
           {node.children.map((child) => (
-            <TreeNode key={child.id} node={child} level={level + 1} />
+            <TreeNode key={child.id} node={child} level={level + 1} warningNodeIds={warningNodeIds} />
           ))}
         </div>
       )}

@@ -1,7 +1,7 @@
 // Main canvas for displaying the TUI design
 
 import { useEffect, useState, useRef, memo, type CSSProperties } from 'react';
-import { useCanvasStore, useComponentStore, useSelectionStore } from '../../stores';
+import { useCanvasStore, useComponentStore, useSelectionStore, useThemeStore } from '../../stores';
 import { layoutEngine } from '../../utils/layout';
 import { dragStore } from '../../hooks/useDragAndDrop';
 import { COMPONENT_LIBRARY, canHaveChildren } from '../../constants/components';
@@ -9,22 +9,6 @@ import { THEMES } from '../../stores/themeStore';
 import type { ComponentNode } from '../../types';
 import { ComponentToolbar } from './ComponentToolbar';
 
-// Helper to find the active theme for a component by walking up the tree
-function findComponentTheme(node: ComponentNode, componentStore: any): string {
-  // Check if this node has a theme
-  if (node.props.theme && typeof node.props.theme === 'string') {
-    return node.props.theme;
-  }
-
-  // Walk up to find parent with theme
-  const parent = componentStore.getParent(node.id);
-  if (parent) {
-    return findComponentTheme(parent, componentStore);
-  }
-
-  // Default fallback
-  return 'dracula';
-}
 
 export function Canvas() {
   // Subscribe to ENTIRE store to avoid stale state
@@ -35,7 +19,6 @@ export function Canvas() {
   const { root } = componentStore;
 
   const [isDragOver, setIsDragOver] = useState(false);
-  const [offCanvasWarning, setOffCanvasWarning] = useState<string | null>(null);
   const [isToolbarDocked, setIsToolbarDocked] = useState(() =>
     JSON.parse(localStorage.getItem('toolbar-docked') || 'false')
   );
@@ -53,7 +36,6 @@ export function Canvas() {
   // Responsive canvas sizing
   useEffect(() => {
     if (canvasStore.sizeMode !== 'responsive') {
-      setOffCanvasWarning(null);
       return;
     }
 
@@ -79,24 +61,6 @@ export function Canvas() {
         Math.max(10, Math.min(100, rows))
       );
 
-      // Check for off-canvas elements
-      if (root) {
-        layoutEngine.calculateLayout(root, cols, rows, true);
-        const allLayouts = layoutEngine.getAllLayouts();
-
-        let hasOffCanvas = false;
-        allLayouts.forEach((layout) => {
-          if (layout.x + layout.width > cols || layout.y + layout.height > rows) {
-            hasOffCanvas = true;
-          }
-        });
-
-        if (hasOffCanvas) {
-          setOffCanvasWarning('Some elements are outside the visible canvas area');
-        } else {
-          setOffCanvasWarning(null);
-        }
-      }
     };
 
     updateCanvasSize();
@@ -276,6 +240,7 @@ export function Canvas() {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
+          onClick={() => { if (root) selectionStore.select('root'); }}
         >
           {/* Grid */}
           {canvasStore.showGrid && (
@@ -345,15 +310,6 @@ export function Canvas() {
           </span>
         </div>
 
-        {/* Off-canvas Warning */}
-        {offCanvasWarning && (
-          <div className="absolute -bottom-14 left-0 right-0 flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded text-yellow-500 text-[10px]">
-            <svg className="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            {offCanvasWarning}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -374,13 +330,13 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
   // Subscribe to entire store to avoid stale state
   const selectionStore = useSelectionStore();
   const componentStore = useComponentStore();
+  const themeStore = useThemeStore();
 
   const selectedIds = selectionStore.selectedIds;
   const isSelected = selectedIds.has(node.id);
 
-  // Find the active theme for this component
-  const activeThemeName = findComponentTheme(node, componentStore);
-  const activeTheme = THEMES[activeThemeName as keyof typeof THEMES] || THEMES.dracula;
+  // Use the global toolbar theme for ANSI color resolution
+  const activeTheme = THEMES[themeStore.currentTheme as keyof typeof THEMES] || THEMES.dracula;
 
   // Helper to convert ANSI color name to hex using component's theme
   const getColor = (color?: string): string | undefined => {
@@ -402,7 +358,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
     startHeight: number;
   } | null>(null);
 
-  if (!layout || node.hidden) return null;
+  if (!layout) return null;
 
   const hasOverflow = layoutEngine.getDebugInfo(node.id)?.overflow === true;
 
@@ -951,7 +907,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
           fontSize: `${12 * zoom}px`,
           pointerEvents: node.locked ? 'none' : 'auto',
           ...borderStyleProps,
-          display: 'flex',
+          display: node.hidden ? 'none' : 'flex',
           alignItems: 'center',
           justifyContent: node.type === 'Text'
             ? ((node.props.align === 'right') ? 'flex-end' : (node.props.align === 'center') ? 'center' : 'flex-start')
@@ -968,15 +924,6 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
         {/* Render content - border is handled by CSS */}
         {renderComponent()}
 
-        {/* Component label - only when selected, shows name + dimensions + position */}
-        {isSelected && node.id !== 'root' && (
-          <div
-            className="absolute -top-5 left-0 text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded whitespace-nowrap"
-            style={{ fontSize: '10px' }}
-          >
-            {node.name} · {layout.width}×{layout.height} @ ({layout.x}, {layout.y})
-          </div>
-        )}
 
         {/* Resize handles - shown when selected, constrained by component type */}
         {isSelected && node.id !== 'root' && !isDragging && getResizeHandles().map(dir => {

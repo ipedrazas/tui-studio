@@ -2,18 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Eye, EyeOff, Minus } from 'lucide-react';
-import { useComponentStore, useSelectionStore } from '../../stores';
-import { THEME_NAMES, THEMES } from '../../stores/themeStore';
-import type { ComponentNode } from '../../types';
-
-// Helper to find the active theme for a component
-function findComponentTheme(node: ComponentNode | null, componentStore: any): string {
-  if (!node) return 'dracula';
-  if (node.props.theme && typeof node.props.theme === 'string') return node.props.theme;
-  const parent = componentStore.getParent(node.id);
-  if (parent) return findComponentTheme(parent, componentStore);
-  return 'dracula';
-}
+import { useThemeStore } from '../../stores';
+import { THEMES } from '../../stores/themeStore';
 
 const ANSI_COLORS = [
   { name: 'Black',          value: 'black' },
@@ -34,7 +24,7 @@ const ANSI_COLORS = [
   { name: 'Bright White',   value: 'brightWhite' },
 ];
 
-type ColorTab = 'ansi' | 'rgb' | 'themes';
+type ColorTab = 'ansi' | 'rgb';
 
 interface ColorPickerProps {
   value?: string;
@@ -43,19 +33,18 @@ interface ColorPickerProps {
 }
 
 export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
-  const componentStore = useComponentStore();
-  const selectionStore = useSelectionStore();
+  const themeStore = useThemeStore();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ColorTab>('ansi');
   const [hexFocused, setHexFocused] = useState(false);
   const [hexText, setHexText] = useState('');
+  const [searchKey, setSearchKey] = useState('');
+  const [searchIndex, setSearchIndex] = useState(0);
   const savedColorRef = useRef<string>('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
-  const selectedComponents = selectionStore.getSelectedComponents();
-  const selectedComponent = selectedComponents[0];
-  const activeThemeName = findComponentTheme(selectedComponent, componentStore);
-  const activeTheme = THEMES[activeThemeName as keyof typeof THEMES] || THEMES.dracula;
+  const activeTheme = THEMES[themeStore.currentTheme as keyof typeof THEMES] || THEMES.dracula;
 
   // Resolve any color value → hex string
   const resolveHex = (v: string | undefined): string => {
@@ -96,6 +85,48 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
       onChange(savedColorRef.current || '');
     }
   };
+
+  const handlePopupKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsOpen(false);
+      return;
+    }
+    if (activeTab !== 'ansi') return;
+    const key = e.key.toLowerCase();
+    if (!/^[a-z]$/.test(key)) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const matches = ANSI_COLORS.filter(c => c.name.toLowerCase().startsWith(key));
+    if (matches.length === 0) return;
+
+    let idx = 0;
+    if (key === searchKey) {
+      idx = (searchIndex + 1) % matches.length;
+    }
+    setSearchKey(key);
+    setSearchIndex(idx);
+
+    const chosen = matches[idx];
+    onChange(chosen.value);
+
+    // Scroll the matching item into view
+    const el = listRef.current?.querySelector(`[data-color="${chosen.value}"]`) as HTMLElement | null;
+    el?.scrollIntoView({ block: 'nearest' });
+  };
+
+  // Reset search state when popup closes; focus popup when it opens
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchKey('');
+      setSearchIndex(0);
+    } else {
+      // Focus the popup so it can receive keydown events immediately
+      setTimeout(() => (dropdownRef.current?.querySelector('[tabindex="-1"]') as HTMLElement)?.focus(), 0);
+    }
+  }, [isOpen]);
 
   // Close popup on outside click
   useEffect(() => {
@@ -173,12 +204,15 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
 
       {/* Popup — color selector */}
       {isOpen && (
-        <div className="absolute z-50 left-0 mt-1 w-48 bg-popover border border-border rounded-md flex flex-col"
+        <div
+          className="absolute z-50 left-0 mt-1 w-48 bg-popover border border-border rounded-md flex flex-col"
           style={{ top: '100%' }}
+          tabIndex={-1}
+          onKeyDown={handlePopupKeyDown}
         >
           {/* Tabs */}
           <div className="flex border-b border-border bg-secondary/50">
-            {(['ansi', 'rgb', 'themes'] as ColorTab[]).map((tab) => (
+            {(['ansi', 'rgb'] as ColorTab[]).map((tab) => (
               <button
                 key={tab}
                 type="button"
@@ -189,12 +223,12 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {tab === 'ansi' ? 'ANSI' : tab === 'rgb' ? 'RGB' : 'Themes'}
+                {tab === 'ansi' ? 'ANSI' : 'RGB'}
               </button>
             ))}
           </div>
 
-          <div className="overflow-y-auto max-h-64">
+          <div ref={listRef} className="overflow-y-auto max-h-64">
             {/* None option */}
             <button
               type="button"
@@ -210,19 +244,28 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
             {/* ANSI tab */}
             {activeTab === 'ansi' && ANSI_COLORS.map((color) => {
               const hex = activeTheme[color.value as keyof typeof activeTheme];
+              const isActive = value === color.value;
               return (
                 <button
                   key={color.value}
+                  data-color={color.value}
                   type="button"
                   onClick={() => { onChange(color.value); setIsOpen(false); }}
                   className={`w-full px-2 py-1.5 text-xs flex items-center gap-2 hover:bg-accent transition-colors text-left ${
-                    value === color.value ? 'bg-accent' : ''
+                    isActive ? 'bg-accent ring-1 ring-inset ring-primary' : ''
                   }`}
                 >
                   <div className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
                     style={{ backgroundColor: hex }}
                   />
                   <span>{color.name}</span>
+                  {isActive && (
+                    <span className="ml-auto text-[9px] text-primary font-mono uppercase">
+                      {searchKey && color.name.toLowerCase().startsWith(searchKey)
+                        ? `${ANSI_COLORS.filter(c => c.name.toLowerCase().startsWith(searchKey)).findIndex(c => c.value === color.value) + 1}/${ANSI_COLORS.filter(c => c.name.toLowerCase().startsWith(searchKey)).length}`
+                        : ''}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -268,44 +311,6 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
               </div>
             )}
 
-            {/* Themes tab */}
-            {activeTab === 'themes' && (
-              <div className="p-2">
-                <div className="text-[10px] text-muted-foreground mb-2 px-1">
-                  Set theme for nearest Screen
-                </div>
-                {THEME_NAMES.map((theme) => {
-                  const findScreen = (node: ComponentNode | null): ComponentNode | null => {
-                    if (!node) return null;
-                    if (node.type === 'Screen') return node;
-                    return findScreen(componentStore.getParent(node.id));
-                  };
-                  const screenComponent = findScreen(selectedComponent);
-
-                  return (
-                    <button
-                      key={theme.value}
-                      type="button"
-                      onClick={() => {
-                        if (screenComponent) {
-                          componentStore.updateProps(screenComponent.id, { theme: theme.value });
-                          setIsOpen(false);
-                        }
-                      }}
-                      disabled={!screenComponent}
-                      className={`w-full px-2 py-1.5 text-xs text-left hover:bg-accent transition-colors rounded flex items-center justify-between disabled:opacity-50 ${
-                        activeThemeName === theme.value ? 'bg-accent' : ''
-                      }`}
-                    >
-                      <span>{theme.label}</span>
-                      {activeThemeName === theme.value && (
-                        <span className="text-[10px] text-primary">Active</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
           </div>
         </div>
       )}

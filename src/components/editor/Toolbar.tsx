@@ -1,7 +1,7 @@
 // Top toolbar with controls
 
 import { useState, useEffect, useRef } from 'react';
-import { Undo2, Redo2, ZoomIn, ZoomOut, Grid3x3, Save, Download, Palette, Search, ChevronDown, ChevronRight } from 'lucide-react';
+import { Undo2, Redo2, ZoomIn, ZoomOut, Grid3x3, Save, Palette, Search, ChevronDown, ChevronRight } from 'lucide-react';
 import { useComponentStore, useCanvasStore, useThemeStore } from '../../stores';
 import { ExportModal } from '../export/ExportModal';
 import { THEME_NAMES } from '../../stores/themeStore';
@@ -210,6 +210,13 @@ export function Toolbar() {
     return () => window.removeEventListener('open-save-dialog', handler);
   }, []);
 
+  // Listen for export trigger (e.g. from Cmd+E or app menu)
+  useEffect(() => {
+    const handler = () => setExportOpen(true);
+    window.addEventListener('command-export', handler);
+    return () => window.removeEventListener('command-export', handler);
+  }, []);
+
   return (
     <>
       <div className="h-14 px-4 flex items-center justify-between bg-background border-b border-border">
@@ -333,13 +340,6 @@ export function Toolbar() {
         >
           <Save className="w-4 h-4" />
           <span className="font-medium">Save</span>
-        </button>
-        <button
-          onClick={() => setExportOpen(true)}
-          className="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center gap-2 font-medium transition-colors"
-        >
-          <Download className="w-4 h-4" />
-          Export
         </button>
       </div>
     </div>

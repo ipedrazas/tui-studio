@@ -203,19 +203,6 @@ function App() {
     return () => window.removeEventListener('open-command-palette', handleOpenCommandPalette);
   }, []);
 
-  // Listen for command events (export only — save/open are called directly to preserve user gesture)
-  useEffect(() => {
-    const handleExport = () => {
-      const exportButton = document.querySelector('[title="Export"]') as HTMLButtonElement;
-      if (exportButton) exportButton.click();
-    };
-
-    window.addEventListener('command-export', handleExport);
-
-    return () => {
-      window.removeEventListener('command-export', handleExport);
-    };
-  }, []);
 
   // Handle adding component from command palette
   const handleAddComponent = (type: ComponentType) => {

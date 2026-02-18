@@ -97,8 +97,6 @@ export function canHaveChildren(type: ComponentType): boolean {
     'Radio',
     'Toggle',
     'Text',
-    'Label',
-    'Badge',
     'Spinner',
     'ProgressBar',
     'Spacer',
@@ -118,12 +116,12 @@ export function canBeChild(parentType: ComponentType, childType: ComponentType):
 
   // Modal can only have certain children
   if (parentType === 'Modal') {
-    return ['Box', 'Flexbox', 'Grid', 'Text'].includes(childType);
+    return ['Box', 'Grid', 'Text'].includes(childType);
   }
 
   // Tabs must have direct children of specific types
   if (parentType === 'Tabs') {
-    return childType === 'Box' || childType === 'Flexbox';
+    return childType === 'Box';
   }
 
   return true;

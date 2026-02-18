@@ -21,6 +21,25 @@ function App() {
     document.documentElement.classList.add('dark');
   }, []);
 
+  // Initialize default Screen root on first load
+  useEffect(() => {
+    if (!componentStore.root) {
+      componentStore.setRoot({
+        id: 'root',
+        type: 'Screen',
+        name: 'Main Screen',
+        props: { width: 80, height: 24, theme: 'dracula' },
+        layout: { type: 'absolute' },
+        style: { border: false },
+        events: {},
+        children: [],
+        locked: false,
+        hidden: false,
+        collapsed: false,
+      });
+    }
+  }, []);
+
   // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

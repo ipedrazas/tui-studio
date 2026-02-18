@@ -1,6 +1,6 @@
 // Main canvas for displaying the TUI design
 
-import { useEffect, useState, useRef, memo } from 'react';
+import { useEffect, useState, useRef, memo, type CSSProperties } from 'react';
 import { useCanvasStore, useComponentStore, useSelectionStore } from '../../stores';
 import { layoutEngine } from '../../utils/layout';
 import { dragStore } from '../../hooks/useDragAndDrop';
@@ -81,7 +81,7 @@ export function Canvas() {
 
       // Check for off-canvas elements
       if (root) {
-        layoutEngine.calculateLayout(root, cols, rows);
+        layoutEngine.calculateLayout(root, cols, rows, true);
         const allLayouts = layoutEngine.getAllLayouts();
 
         let hasOffCanvas = false;
@@ -162,7 +162,7 @@ export function Canvas() {
 
   // Calculate layout SYNCHRONOUSLY during render so ComponentRenderer has layout data
   // This must happen BEFORE ComponentRenderer tries to access layout
-  layoutEngine.calculateLayout(root, canvasStore.width, canvasStore.height);
+  layoutEngine.calculateLayout(root, canvasStore.width, canvasStore.height, canvasStore.sizeMode === 'responsive');
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -322,6 +322,8 @@ export function Canvas() {
                 cellWidth={cellWidth}
                 cellHeight={cellHeight}
                 zoom={canvasStore.zoom}
+                canvasWidth={canvasStore.width}
+                canvasHeight={canvasStore.height}
               />
             </div>
           )}
@@ -363,9 +365,12 @@ interface ComponentRendererProps {
   cellWidth: number;
   cellHeight: number;
   zoom: number;
+  /** Canvas dimensions — changing these busts the memo so layout positions stay fresh on resize */
+  canvasWidth: number;
+  canvasHeight: number;
 }
 
-const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRendererProps) {
+const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cellHeight, zoom, canvasWidth, canvasHeight }: ComponentRendererProps) {
   // Subscribe to entire store to avoid stale state
   const selectionStore = useSelectionStore();
   const componentStore = useComponentStore();
@@ -399,6 +404,8 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
 
   if (!layout || node.hidden) return null;
 
+  const hasOverflow = layoutEngine.getDebugInfo(node.id)?.overflow === true;
+
   // Render component content as JSX
   const renderComponent = (): React.ReactNode => {
     const colorMap: Record<string, string> = {
@@ -411,8 +418,17 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
     const getColorClass = (color: string) => colorMap[color] || 'text-white';
 
     switch (node.type) {
-      case 'Text':
-        return <span className="font-mono">{(node.props.content as string) || 'Text'}</span>;
+      case 'Text': {
+        const align = (node.props.align as string) || 'left';
+        return (
+          <span
+            className="font-mono whitespace-pre-wrap w-full"
+            style={{ textAlign: align as 'left' | 'center' | 'right' }}
+          >
+            {(node.props.content as string) || 'Text'}
+          </span>
+        );
+      }
       case 'Button': {
         const label = node.props.label as string || 'Button';
         const iconLeft = (node.props.iconLeftEnabled && node.props.iconLeft) ? node.props.iconLeft as string : '';
@@ -641,9 +657,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
         );
       }
       case 'Box':
-      case 'Flexbox':
       case 'Grid':
-      case 'Stack':
       case 'Spacer':
       case 'Screen':
         return null;
@@ -656,7 +670,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
   const getResizeHandles = (): Array<'e' | 's' | 'se'> => {
     if (node.id === 'root') return [];
     // These types have a fixed height — only allow width resize
-    const widthOnlyTypes = ['Tabs', 'Button', 'TextInput', 'Select', 'ProgressBar', 'Badge', 'Label', 'Spinner', 'Checkbox', 'Radio', 'Toggle'];
+    const widthOnlyTypes = ['Tabs', 'Button', 'TextInput', 'Select', 'ProgressBar', 'Spinner', 'Checkbox', 'Radio', 'Toggle'];
     if (widthOnlyTypes.includes(node.type)) return ['e'];
     return ['e', 's', 'se'];
   };
@@ -701,12 +715,48 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
   }, [resizing, cellWidth, cellHeight, zoom, node.id, componentStore]);
 
   const hasBorder = node.style.border;
+  const borderColor = hasBorder ? (getColor(node.style.borderColor) || '#fff') : null;
+  const showBorderTop    = node.style.borderTop    !== false;
+  const showBorderRight  = node.style.borderRight  !== false;
+  const showBorderBottom = node.style.borderBottom !== false;
+  const showBorderLeft   = node.style.borderLeft   !== false;
+  const hasCorners       = node.style.borderCorners !== false;
+
+  let borderStyleProps: CSSProperties = { border: 'none' };
+  if (hasBorder && borderColor) {
+    if (hasCorners) {
+      borderStyleProps = {
+        borderTop:    showBorderTop    ? `1px solid ${borderColor}` : 'none',
+        borderRight:  showBorderRight  ? `1px solid ${borderColor}` : 'none',
+        borderBottom: showBorderBottom ? `1px solid ${borderColor}` : 'none',
+        borderLeft:   showBorderLeft   ? `1px solid ${borderColor}` : 'none',
+        boxSizing: 'border-box',
+      };
+    } else {
+      const cw = cellWidth * zoom;
+      const ch = cellHeight * zoom;
+      const images: string[] = [];
+      const sizes: string[] = [];
+      const positions: string[] = [];
+      if (showBorderTop)    { images.push(`linear-gradient(${borderColor},${borderColor})`); sizes.push(`calc(100% - ${2*cw}px) 1px`); positions.push(`${cw}px 0`); }
+      if (showBorderBottom) { images.push(`linear-gradient(${borderColor},${borderColor})`); sizes.push(`calc(100% - ${2*cw}px) 1px`); positions.push(`${cw}px 100%`); }
+      if (showBorderLeft)   { images.push(`linear-gradient(${borderColor},${borderColor})`); sizes.push(`1px calc(100% - ${2*ch}px)`); positions.push(`0 ${ch}px`); }
+      if (showBorderRight)  { images.push(`linear-gradient(${borderColor},${borderColor})`); sizes.push(`1px calc(100% - ${2*ch}px)`); positions.push(`100% ${ch}px`); }
+      borderStyleProps = {
+        backgroundImage: images.join(', '),
+        backgroundSize: sizes.join(', '),
+        backgroundPosition: positions.join(', '),
+        backgroundRepeat: 'no-repeat',
+      };
+    }
+  }
 
   const x = layout.x * cellWidth * zoom;
   const y = layout.y * cellHeight * zoom;
 
   const handleDragStart = (e: React.DragEvent) => {
     e.stopPropagation();
+    e.dataTransfer.setDragImage(e.currentTarget, 0, 0);
     setIsDragging(true);
     dragStore.startDrag({
       type: 'existing-component',
@@ -840,7 +890,11 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
         className={`absolute transition-colors ${
           isDragging ? 'opacity-50 cursor-grabbing' : 'cursor-grab'
         } ${
-          isSelected ? 'ring-2 ring-primary ring-offset-2' : ''
+          isSelected
+            ? 'ring-2 ring-primary ring-offset-2'
+            : hasOverflow
+              ? 'ring-1 ring-red-500'
+              : ''
         }`}
         style={{
           left: `${x}px`,
@@ -855,11 +909,12 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
           opacity: isDragging ? 0.5 : (node.style.opacity ?? 1),
           fontSize: `${12 * zoom}px`,
           pointerEvents: node.locked ? 'none' : 'auto',
-          border: hasBorder ? `1px solid ${getColor(node.style.borderColor) || '#fff'}` : 'none',
-          boxSizing: 'border-box',
+          ...borderStyleProps,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: ['Checkbox', 'Radio'].includes(node.type) ? 'flex-start' : 'center',
+          justifyContent: node.type === 'Text'
+            ? ((node.props.align === 'right') ? 'flex-end' : (node.props.align === 'center') ? 'center' : 'flex-start')
+            : ['Checkbox', 'Radio'].includes(node.type) ? 'flex-start' : 'center',
           padding: node.layout.padding !== undefined
             ? `${node.layout.padding * cellHeight * zoom}px ${node.layout.padding * cellWidth * zoom}px`
             : undefined,
@@ -967,6 +1022,8 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
           cellWidth={cellWidth}
           cellHeight={cellHeight}
           zoom={zoom}
+          canvasWidth={canvasWidth}
+          canvasHeight={canvasHeight}
         />
       ))}
     </>
@@ -975,5 +1032,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
   prev.node === next.node &&
   prev.cellWidth === next.cellWidth &&
   prev.cellHeight === next.cellHeight &&
-  prev.zoom === next.zoom
+  prev.zoom === next.zoom &&
+  prev.canvasWidth === next.canvasWidth &&
+  prev.canvasHeight === next.canvasHeight
 );

@@ -4,9 +4,7 @@ export type ComponentType =
   // Layout
   | 'Screen'
   | 'Box'
-  | 'Flexbox'
   | 'Grid'
-  | 'Stack'
   | 'Spacer'
   // Input
   | 'TextInput'
@@ -17,8 +15,6 @@ export type ComponentType =
   | 'Toggle'
   // Display
   | 'Text'
-  | 'Label'
-  | 'Badge'
   | 'Spinner'
   | 'ProgressBar'
   // Data
@@ -100,6 +96,11 @@ export interface StyleProps {
   borderRight?: boolean;
   borderBottom?: boolean;
   borderLeft?: boolean;
+  borderTopStyle?: 'single' | 'double' | 'rounded' | 'bold' | 'hidden';
+  borderRightStyle?: 'single' | 'double' | 'rounded' | 'bold' | 'hidden';
+  borderBottomStyle?: 'single' | 'double' | 'rounded' | 'bold' | 'hidden';
+  borderLeftStyle?: 'single' | 'double' | 'rounded' | 'bold' | 'hidden';
+  borderCorners?: boolean; // false = replace corners with line characters
 
   // Colors
   color?: string;        // Text/foreground color

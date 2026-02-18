@@ -9,9 +9,7 @@ import {
   Lock,
   Unlock,
   Square,
-  LayoutGrid,
   Columns,
-  Layers as LayersIcon,
   Space,
   MousePointerClick,
   Type,
@@ -20,7 +18,6 @@ import {
   ChevronDown as SelectIcon,
   ToggleLeft,
   FileText,
-  Tag,
   Loader2,
   Activity,
   Table2,
@@ -48,12 +45,8 @@ export function getComponentIcon(type: ComponentType) {
       return <PanelTop {...iconProps} />;
     case 'Box':
       return <Square {...iconProps} />;
-    case 'Flexbox':
-      return <LayoutGrid {...iconProps} />;
     case 'Grid':
       return <Columns {...iconProps} />;
-    case 'Stack':
-      return <LayersIcon {...iconProps} />;
     case 'Spacer':
       return <Space {...iconProps} />;
 
@@ -74,10 +67,6 @@ export function getComponentIcon(type: ComponentType) {
     // Display
     case 'Text':
       return <FileText {...iconProps} />;
-    case 'Label':
-      return <Tag {...iconProps} />;
-    case 'Badge':
-      return <Tag {...iconProps} />;
     case 'Spinner':
       return <Loader2 {...iconProps} />;
     case 'ProgressBar':

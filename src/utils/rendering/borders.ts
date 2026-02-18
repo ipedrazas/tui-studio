@@ -80,6 +80,11 @@ export interface BorderConfig {
   bottom?: boolean;
   left?: boolean;
   right?: boolean;
+  topStyle?: string;
+  rightStyle?: string;
+  bottomStyle?: string;
+  leftStyle?: string;
+  corners?: boolean; // false = replace corner chars with line chars
 }
 
 /**
@@ -91,22 +96,29 @@ export function renderBox(
   height: number,
   config: BorderConfig = { style: 'single' }
 ): string[] {
-  const style = BORDER_STYLES[config.style] || BORDER_STYLES.single;
+  // Per-side styles fall back to the global style
+  const globalStyle  = BORDER_STYLES[config.style]       || BORDER_STYLES.single;
+  const topSty    = BORDER_STYLES[config.topStyle    ?? config.style] || globalStyle;
+  const bottomSty = BORDER_STYLES[config.bottomStyle ?? config.style] || globalStyle;
+  const leftSty   = BORDER_STYLES[config.leftStyle   ?? config.style] || globalStyle;
+  const rightSty  = BORDER_STYLES[config.rightStyle  ?? config.style] || globalStyle;
+
   const lines: string[] = [];
 
   const showTop = config.top !== false;
   const showBottom = config.bottom !== false;
   const showLeft = config.left !== false;
   const showRight = config.right !== false;
+  const showCorners = config.corners !== false;
 
   const innerWidth = width - (showLeft ? 1 : 0) - (showRight ? 1 : 0);
   const contentHeight = height - (showTop ? 1 : 0) - (showBottom ? 1 : 0);
 
   // Top border
   if (showTop) {
-    const topLeft = showLeft ? style.topLeft : '';
-    const topRight = showRight ? style.topRight : '';
-    const topLine = style.top.repeat(innerWidth);
+    const topLeft  = showLeft  ? (showCorners ? globalStyle.topLeft  : topSty.top) : '';
+    const topRight = showRight ? (showCorners ? globalStyle.topRight : topSty.top) : '';
+    const topLine  = topSty.top.repeat(innerWidth);
     lines.push(topLeft + topLine + topRight);
   }
 
@@ -114,16 +126,16 @@ export function renderBox(
   for (let i = 0; i < contentHeight; i++) {
     const contentLine = content[i] || '';
     const paddedContent = contentLine.padEnd(innerWidth, ' ').slice(0, innerWidth);
-    const left = showLeft ? style.left : '';
-    const right = showRight ? style.right : '';
+    const left  = showLeft  ? leftSty.left   : '';
+    const right = showRight ? rightSty.right : '';
     lines.push(left + paddedContent + right);
   }
 
   // Bottom border
   if (showBottom) {
-    const bottomLeft = showLeft ? style.bottomLeft : '';
-    const bottomRight = showRight ? style.bottomRight : '';
-    const bottomLine = style.bottom.repeat(innerWidth);
+    const bottomLeft  = showLeft  ? (showCorners ? globalStyle.bottomLeft  : bottomSty.bottom) : '';
+    const bottomRight = showRight ? (showCorners ? globalStyle.bottomRight : bottomSty.bottom) : '';
+    const bottomLine  = bottomSty.bottom.repeat(innerWidth);
     lines.push(bottomLeft + bottomLine + bottomRight);
   }
 

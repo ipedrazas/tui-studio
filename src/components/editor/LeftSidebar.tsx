@@ -8,23 +8,12 @@ import { ComponentTree } from './ComponentTree';
 type Tab = 'components' | 'layers';
 
 export function LeftSidebar() {
-  const [activeTab, setActiveTab] = useState<Tab>('components');
+  const [activeTab, setActiveTab] = useState<Tab>('layers');
 
   return (
     <div className="flex flex-col h-full">
       {/* Tabs */}
       <div className="flex border-b border-border">
-        <button
-          onClick={() => setActiveTab('components')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
-            activeTab === 'components'
-              ? 'bg-background border-b-2 border-primary text-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-          }`}
-        >
-          <Package className="w-4 h-4" />
-          Components
-        </button>
         <button
           onClick={() => setActiveTab('layers')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
@@ -35,6 +24,17 @@ export function LeftSidebar() {
         >
           <Layers className="w-4 h-4" />
           Layers
+        </button>
+        <button
+          onClick={() => setActiveTab('components')}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+            activeTab === 'components'
+              ? 'bg-background border-b-2 border-primary text-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+          }`}
+        >
+          <Package className="w-4 h-4" />
+          Components
         </button>
       </div>
 

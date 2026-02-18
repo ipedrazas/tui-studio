@@ -1,7 +1,7 @@
 // Top toolbar with controls
 
 import { useState, useEffect } from 'react';
-import { Undo2, Redo2, ZoomIn, ZoomOut, Grid3x3, Save, Download, Palette } from 'lucide-react';
+import { Undo2, Redo2, ZoomIn, ZoomOut, Grid3x3, Save, Download, Palette, Search } from 'lucide-react';
 import { useComponentStore, useCanvasStore, useThemeStore } from '../../stores';
 import { ExportModal } from '../export/ExportModal';
 import { THEME_NAMES } from '../../stores/themeStore';
@@ -32,10 +32,11 @@ export function Toolbar() {
     <>
       <div className="h-14 px-4 flex items-center justify-between bg-background border-b border-border">
         {/* Left - Logo/Title */}
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-semibold">TUIStudio</h1>
-          <div className="text-xs text-muted-foreground">
-            Terminal UI Design Tool
+        <div className="flex items-center gap-3">
+          <img src="/tui-studio.svg" alt="TUIStudio" className="w-7 h-7" />
+          <div>
+            <h1 className="text-sm font-semibold leading-none">TUIStudio</h1>
+            <div className="text-[10px] text-muted-foreground mt-0.5">Terminal UI Design Tool</div>
           </div>
         </div>
 
@@ -127,6 +128,15 @@ export function Toolbar() {
             ))}
           </select>
         </div>
+
+        {/* Command Palette */}
+        <button
+          onClick={() => window.dispatchEvent(new Event('open-command-palette'))}
+          className="p-2 hover:bg-accent rounded-lg transition-colors"
+          title="Command Palette (Ctrl+P)"
+        >
+          <Search className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Right - Actions */}

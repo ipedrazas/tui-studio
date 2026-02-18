@@ -9,13 +9,16 @@ import { calculateAbsoluteLayout } from './absolute';
 export class LayoutEngine {
   private layouts: Map<string, ComputedLayout> = new Map();
   private debugInfo: Map<string, LayoutDebugInfo> = new Map();
+  private responsive = false;
 
   /**
-   * Calculate layout for the entire component tree
+   * Calculate layout for the entire component tree.
+   * When responsive=true the root node fills the canvas, ignoring its props.width/height.
    */
-  calculateLayout(root: ComponentNode | null, canvasWidth: number, canvasHeight: number): void {
+  calculateLayout(root: ComponentNode | null, canvasWidth: number, canvasHeight: number, responsive = false): void {
     this.layouts.clear();
     this.debugInfo.clear();
+    this.responsive = responsive;
 
     if (!root) return;
 
@@ -64,16 +67,19 @@ export class LayoutEngine {
     let width = availableWidth;
     let height = availableHeight;
 
-    if (typeof node.props.width === 'number') {
-      width = node.props.width;
-    } else if (node.props.width === 'auto') {
-      width = this.calculateAutoWidth(node);
-    }
+    // In responsive mode the root node (no parent) fills the canvas; skip props constraints.
+    if (!this.responsive || parentLayout !== null) {
+      if (typeof node.props.width === 'number') {
+        width = node.props.width;
+      } else if (node.props.width === 'auto') {
+        width = this.calculateAutoWidth(node);
+      }
 
-    if (typeof node.props.height === 'number') {
-      height = node.props.height;
-    } else if (node.props.height === 'auto') {
-      height = this.calculateAutoHeight(node);
+      if (typeof node.props.height === 'number') {
+        height = node.props.height;
+      } else if (node.props.height === 'auto') {
+        height = this.calculateAutoHeight(node);
+      }
     }
 
     // Tabs always auto-sizes unless an explicit numeric dimension is set
@@ -87,7 +93,7 @@ export class LayoutEngine {
     }
 
     // Leaf components always use their intrinsic height unless explicitly overridden
-    const leafTypes = ['Button', 'TextInput', 'Checkbox', 'Radio', 'Toggle', 'Select', 'Badge', 'Label', 'Spinner', 'ProgressBar', 'Text'];
+    const leafTypes = ['Button', 'TextInput', 'Checkbox', 'Radio', 'Toggle', 'Select', 'Spinner', 'ProgressBar', 'Text'];
     if (leafTypes.includes(node.type) && typeof node.props.height !== 'number') {
       height = this.calculateAutoHeight(node);
     }
@@ -525,8 +531,6 @@ export class LayoutEngine {
       case 'Radio':
       case 'Toggle':
       case 'Select':
-      case 'Badge':
-      case 'Label':
       case 'Spinner':
       case 'ProgressBar':
         return node.style.border ? 3 : 1;

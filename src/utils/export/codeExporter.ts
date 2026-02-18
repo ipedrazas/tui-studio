@@ -235,7 +235,6 @@ function generateTextualComponents(node: ComponentNode, indent: number): string 
 function mapToOpenTUIComponent(type: string): string {
   const map: Record<string, string> = {
     'Box': 'Box',
-    'Flexbox': 'Flex',
     'Text': 'Text',
     'Button': 'Button',
     'TextInput': 'Input',

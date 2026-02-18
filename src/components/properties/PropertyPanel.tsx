@@ -1,7 +1,7 @@
 // Compact Figma-style property panel with collapsible sections
 
-import { useState } from 'react';
-import { ChevronRight, ChevronDown, Trash2, Copy } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ChevronRight, ChevronDown, Trash2, Copy, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { useSelectionStore, useComponentStore } from '../../stores';
 import { LayoutEditor } from './LayoutEditor';
 import { StyleEditor } from './StyleEditor';
@@ -189,6 +189,126 @@ function ContentProperties({ component }: { component: import('../../types').Com
   );
 }
 
+function TextContentEditor({ component }: { component: import('../../types').ComponentNode }) {
+  const componentStore = useComponentStore();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const align = (component.props.align as string) || 'left';
+
+  const insertGlyph = (glyph: string) => {
+    const el = textareaRef.current;
+    const current = (component.props.content as string) || '';
+    if (el) {
+      const start = el.selectionStart ?? current.length;
+      const end = el.selectionEnd ?? current.length;
+      const next = current.slice(0, start) + glyph + current.slice(end);
+      componentStore.updateProps(component.id, { content: next });
+      // Restore cursor after React re-render
+      requestAnimationFrame(() => {
+        el.selectionStart = el.selectionEnd = start + glyph.length;
+        el.focus();
+      });
+    } else {
+      componentStore.updateProps(component.id, { content: current + glyph });
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      {/* Alignment */}
+      <div className="flex items-center justify-between">
+        <label className="text-[9px] text-muted-foreground uppercase tracking-wide">Align</label>
+        <div className="flex gap-0.5 bg-input border border-border/50 rounded p-0.5">
+          {(['left', 'center', 'right'] as const).map((a) => {
+            const Icon = a === 'left' ? AlignLeft : a === 'center' ? AlignCenter : AlignRight;
+            return (
+              <button
+                key={a}
+                onClick={() => componentStore.updateProps(component.id, { align: a })}
+                className={`p-1 rounded transition-colors ${align === a ? 'bg-primary text-primary-foreground' : 'hover:bg-accent text-muted-foreground'}`}
+                title={a.charAt(0).toUpperCase() + a.slice(1)}
+              >
+                <Icon className="w-3 h-3" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div>
+        <div className="flex items-center justify-between mb-0.5">
+          <label className="text-[9px] text-muted-foreground uppercase tracking-wide">Content</label>
+          <GlyphPicker onInsert={insertGlyph} />
+        </div>
+        <textarea
+          ref={textareaRef}
+          value={(component.props.content as string) || ''}
+          onChange={(e) => componentStore.updateProps(component.id, { content: e.target.value })}
+          rows={3}
+          className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] font-mono resize-none focus:border-primary focus:outline-none"
+        />
+      </div>
+    </div>
+  );
+}
+
+const GLYPHS: { name: string; chars: string[] }[] = [
+  { name: 'Dots', chars: ['●', '○', '◉', '◎', '◆', '◇', '▪', '□', '■', '▫', '▬', '▮'] },
+  { name: 'Arrows', chars: ['→', '←', '↑', '↓', '↗', '↘', '↙', '↖', '▶', '◀', '▲', '▼', '⇒', '⇐', '⟹', '⟸'] },
+  { name: 'Box', chars: ['─', '│', '┌', '┐', '└', '┘', '├', '┤', '┬', '┴', '┼', '═', '║', '╔', '╗', '╚', '╝', '╠', '╣', '╦', '╩', '╬'] },
+  { name: 'Blocks', chars: ['░', '▒', '▓', '█', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '▉'] },
+  { name: 'Status', chars: ['✓', '✗', '✕', '⚠', 'ℹ', '★', '☆', '✦', '⊕', '⊗', '⊘', '⊙', '⬤'] },
+  { name: 'Math', chars: ['±', '×', '÷', '≤', '≥', '≠', '∞', 'π', '√', '∑', '∂', '∆'] },
+];
+
+function GlyphPicker({ onInsert }: { onInsert: (glyph: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState(0);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="px-1.5 py-0.5 text-[10px] bg-input border border-border/50 rounded hover:bg-accent transition-colors font-mono"
+        title="Insert glyph"
+      >
+        Ω
+      </button>
+      {open && (
+        <div className="absolute right-0 top-6 z-50 w-56 bg-popover border border-border rounded-lg shadow-lg">
+          {/* Category tabs */}
+          <div className="flex flex-wrap gap-0.5 p-1.5 border-b border-border/50">
+            {GLYPHS.map((cat, i) => (
+              <button
+                key={cat.name}
+                onClick={() => setActiveCategory(i)}
+                className={`px-1.5 py-0.5 text-[9px] rounded transition-colors ${
+                  activeCategory === i ? 'bg-primary text-primary-foreground' : 'hover:bg-accent text-muted-foreground'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+          {/* Glyph grid */}
+          <div className="grid grid-cols-8 gap-0.5 p-1.5">
+            {GLYPHS[activeCategory].chars.map((g) => (
+              <button
+                key={g}
+                onClick={() => { onInsert(g); setOpen(false); }}
+                className="w-6 h-6 flex items-center justify-center text-sm font-mono hover:bg-accent rounded transition-colors"
+                title={`U+${g.codePointAt(0)?.toString(16).toUpperCase().padStart(4, '0')}`}
+              >
+                {g}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Component-specific properties in compact format
 function ComponentProps({ component }: { component: import('../../types').ComponentNode }) {
   const componentStore = useComponentStore();
@@ -197,17 +317,7 @@ function ComponentProps({ component }: { component: import('../../types').Compon
     <div className="space-y-3">
       {/* Text Content */}
       {component.type === 'Text' && (
-        <div>
-          <label className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">Content</label>
-          <textarea
-            value={(component.props.content as string) || ''}
-            onChange={(e) =>
-              componentStore.updateProps(component.id, { content: e.target.value })
-            }
-            rows={3}
-            className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] font-mono resize-none focus:border-primary focus:outline-none"
-          />
-        </div>
+        <TextContentEditor component={component} />
       )}
 
       {/* Button Properties */}
@@ -245,6 +355,9 @@ function ComponentProps({ component }: { component: import('../../types').Compon
               className="flex-1 px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none disabled:opacity-50"
               placeholder="+"
             />
+            <div className={!component.props.iconLeftEnabled ? 'opacity-50 pointer-events-none' : ''}>
+              <GlyphPicker onInsert={(g) => componentStore.updateProps(component.id, { iconLeft: g })} />
+            </div>
           </div>
           <div className="flex items-center gap-1.5">
             <input
@@ -267,6 +380,9 @@ function ComponentProps({ component }: { component: import('../../types').Compon
               className="flex-1 px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none disabled:opacity-50"
               placeholder="→"
             />
+            <div className={!component.props.iconRightEnabled ? 'opacity-50 pointer-events-none' : ''}>
+              <GlyphPicker onInsert={(g) => componentStore.updateProps(component.id, { iconRight: g })} />
+            </div>
           </div>
           <div className="flex items-center gap-1.5">
             <input

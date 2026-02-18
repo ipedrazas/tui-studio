@@ -1,7 +1,7 @@
 // Color picker with ANSI, RGB, and Theme support
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { Eye, EyeOff, Minus } from 'lucide-react';
 import { useComponentStore, useSelectionStore } from '../../stores';
 import { THEME_NAMES, THEMES } from '../../stores/themeStore';
 import type { ComponentNode } from '../../types';
@@ -9,39 +9,29 @@ import type { ComponentNode } from '../../types';
 // Helper to find the active theme for a component
 function findComponentTheme(node: ComponentNode | null, componentStore: any): string {
   if (!node) return 'dracula';
-
-  // Check if this node has a theme
-  if (node.props.theme && typeof node.props.theme === 'string') {
-    return node.props.theme;
-  }
-
-  // Walk up to find parent with theme
+  if (node.props.theme && typeof node.props.theme === 'string') return node.props.theme;
   const parent = componentStore.getParent(node.id);
-  if (parent) {
-    return findComponentTheme(parent, componentStore);
-  }
-
-  // Default fallback
+  if (parent) return findComponentTheme(parent, componentStore);
   return 'dracula';
 }
 
 const ANSI_COLORS = [
-  { name: 'Black', value: 'black' },
-  { name: 'Red', value: 'red' },
-  { name: 'Green', value: 'green' },
-  { name: 'Yellow', value: 'yellow' },
-  { name: 'Blue', value: 'blue' },
-  { name: 'Magenta', value: 'magenta' },
-  { name: 'Cyan', value: 'cyan' },
-  { name: 'White', value: 'white' },
-  { name: 'Bright Black', value: 'brightBlack' },
-  { name: 'Bright Red', value: 'brightRed' },
-  { name: 'Bright Green', value: 'brightGreen' },
-  { name: 'Bright Yellow', value: 'brightYellow' },
-  { name: 'Bright Blue', value: 'brightBlue' },
+  { name: 'Black',          value: 'black' },
+  { name: 'Red',            value: 'red' },
+  { name: 'Green',          value: 'green' },
+  { name: 'Yellow',         value: 'yellow' },
+  { name: 'Blue',           value: 'blue' },
+  { name: 'Magenta',        value: 'magenta' },
+  { name: 'Cyan',           value: 'cyan' },
+  { name: 'White',          value: 'white' },
+  { name: 'Bright Black',   value: 'brightBlack' },
+  { name: 'Bright Red',     value: 'brightRed' },
+  { name: 'Bright Green',   value: 'brightGreen' },
+  { name: 'Bright Yellow',  value: 'brightYellow' },
+  { name: 'Bright Blue',    value: 'brightBlue' },
   { name: 'Bright Magenta', value: 'brightMagenta' },
-  { name: 'Bright Cyan', value: 'brightCyan' },
-  { name: 'Bright White', value: 'brightWhite' },
+  { name: 'Bright Cyan',    value: 'brightCyan' },
+  { name: 'Bright White',   value: 'brightWhite' },
 ];
 
 type ColorTab = 'ansi' | 'rgb' | 'themes';
@@ -57,18 +47,60 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
   const selectionStore = useSelectionStore();
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ColorTab>('ansi');
+  const [hexFocused, setHexFocused] = useState(false);
+  const [hexText, setHexText] = useState('');
+  const savedColorRef = useRef<string>('');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Get the selected component and its theme
   const selectedComponents = selectionStore.getSelectedComponents();
   const selectedComponent = selectedComponents[0];
   const activeThemeName = findComponentTheme(selectedComponent, componentStore);
   const activeTheme = THEMES[activeThemeName as keyof typeof THEMES] || THEMES.dracula;
 
-  // Close dropdown when clicking outside
+  // Resolve any color value → hex string
+  const resolveHex = (v: string | undefined): string => {
+    if (!v) return '';
+    if (v.startsWith('#')) return v.slice(1).toUpperCase();
+    const resolved = activeTheme[v as keyof typeof activeTheme];
+    return resolved ? resolved.replace('#', '').toUpperCase() : '';
+  };
+
+  const derivedHex = resolveHex(value);
+  const swatchHex = value
+    ? (value.startsWith('#') ? value : (activeTheme[value as keyof typeof activeTheme] || null))
+    : null;
+
+  // Hex input — while focused use local state, otherwise derived
+  const hexDisplay = hexFocused ? hexText : derivedHex;
+
+  const handleHexFocus = () => {
+    setHexText(derivedHex);
+    setHexFocused(true);
+  };
+
+  const handleHexBlur = () => {
+    setHexFocused(false);
+  };
+
+  const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value.toUpperCase().replace(/[^0-9A-F]/g, '').slice(0, 6);
+    setHexText(v);
+    if (v.length === 6) onChange('#' + v);
+  };
+
+  const handleEyeToggle = () => {
+    if (value) {
+      savedColorRef.current = value;
+      onChange('');
+    } else {
+      onChange(savedColorRef.current || '');
+    }
+  };
+
+  // Close popup on outside click
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -76,142 +108,134 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Get display info for current color
-  const getCurrentColor = () => {
-    if (!value) return { name: 'None', hex: 'transparent' };
-
-    if (value.startsWith('#')) {
-      return { name: value, hex: value };
-    }
-
-    const ansiColor = ANSI_COLORS.find(c => c.value === value);
-    if (ansiColor) {
-      const hex = activeTheme[value as keyof typeof activeTheme];
-      return { name: ansiColor.name, hex };
-    }
-
-    return { name: value, hex: 'transparent' };
-  };
-
-  const currentColor = getCurrentColor();
-
   return (
     <div ref={dropdownRef} className="relative">
-      <label className="text-xs font-medium mb-1.5 block">{label}</label>
+      {/* Label */}
+      <span className="text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide">
+        {label}
+      </span>
 
-      {/* Dropdown Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-2 py-1.5 bg-secondary border border-border rounded text-xs flex items-center justify-between hover:bg-secondary/80 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <div
-            className="w-4 h-4 rounded border border-border flex-shrink-0"
-            style={{ backgroundColor: currentColor.hex }}
-          />
-          <span className="truncate">{currentColor.name}</span>
-        </div>
-        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+      {/* Compact color row */}
+      <div className="flex items-center gap-1 h-6">
+        {/* Swatch — opens popup */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          title="Choose color"
+          className="w-5 h-5 rounded-sm border border-border/50 flex-shrink-0 overflow-hidden relative"
+          style={{
+            background: 'repeating-conic-gradient(#555 0% 25%, #333 0% 50%) 0 0 / 6px 6px',
+          }}
+        >
+          {swatchHex && (
+            <div className="absolute inset-0" style={{ backgroundColor: swatchHex }} />
+          )}
+        </button>
 
-      {/* Dropdown Menu */}
+        {/* Hex input */}
+        <input
+          type="text"
+          value={hexDisplay}
+          placeholder="default"
+          maxLength={6}
+          onFocus={handleHexFocus}
+          onBlur={handleHexBlur}
+          onChange={handleHexChange}
+          className="flex-1 min-w-0 px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] font-mono focus:border-primary focus:outline-none"
+        />
+
+        {/* Opacity — static 100 for TUI */}
+        <span className="text-[11px] font-mono text-foreground/70 flex-shrink-0 w-6 text-right">
+          100
+        </span>
+        <span className="text-[10px] text-muted-foreground flex-shrink-0">%</span>
+
+        {/* Eye toggle */}
+        <button
+          type="button"
+          onClick={handleEyeToggle}
+          title={value ? 'Hide color' : 'Restore color'}
+          className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {value ? <Eye size={11} /> : <EyeOff size={11} />}
+        </button>
+
+        {/* Clear */}
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          title="Remove color"
+          className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Minus size={11} />
+        </button>
+      </div>
+
+      {/* Popup — color selector */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-80 flex flex-col">
+        <div className="absolute z-50 left-0 mt-1 w-48 bg-popover border border-border rounded-md shadow-lg flex flex-col"
+          style={{ top: '100%' }}
+        >
           {/* Tabs */}
           <div className="flex border-b border-border bg-secondary/50">
-            <button
-              type="button"
-              onClick={() => setActiveTab('ansi')}
-              className={`flex-1 px-3 py-1.5 text-[10px] font-medium transition-colors ${
-                activeTab === 'ansi'
-                  ? 'bg-background border-b-2 border-primary text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              ANSI
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('rgb')}
-              className={`flex-1 px-3 py-1.5 text-[10px] font-medium transition-colors ${
-                activeTab === 'rgb'
-                  ? 'bg-background border-b-2 border-primary text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              RGB
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('themes')}
-              className={`flex-1 px-3 py-1.5 text-[10px] font-medium transition-colors ${
-                activeTab === 'themes'
-                  ? 'bg-background border-b-2 border-primary text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              Themes
-            </button>
+            {(['ansi', 'rgb', 'themes'] as ColorTab[]).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 px-2 py-1.5 text-[10px] font-medium transition-colors ${
+                  activeTab === tab
+                    ? 'bg-background border-b-2 border-primary text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {tab === 'ansi' ? 'ANSI' : tab === 'rgb' ? 'RGB' : 'Themes'}
+              </button>
+            ))}
           </div>
 
-          {/* Tab Content */}
           <div className="overflow-y-auto max-h-64">
-            {/* None option - always available */}
+            {/* None option */}
             <button
               type="button"
-              onClick={() => {
-                onChange('');
-                setIsOpen(false);
-              }}
+              onClick={() => { onChange(''); setIsOpen(false); }}
               className="w-full px-2 py-1.5 text-xs flex items-center gap-2 hover:bg-accent transition-colors text-left border-b border-border"
             >
-              <div className="w-4 h-4 rounded border border-border flex-shrink-0 bg-transparent" />
+              <div className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
+                style={{ background: 'repeating-conic-gradient(#555 0% 25%, #333 0% 50%) 0 0 / 4px 4px' }}
+              />
               <span>None</span>
             </button>
 
-            {/* ANSI Colors Tab */}
-            {activeTab === 'ansi' && (
-              <div>
-                {ANSI_COLORS.map((color) => {
-                  const hexColor = activeTheme[color.value as keyof typeof activeTheme];
-                  const isSelected = value === color.value;
+            {/* ANSI tab */}
+            {activeTab === 'ansi' && ANSI_COLORS.map((color) => {
+              const hex = activeTheme[color.value as keyof typeof activeTheme];
+              return (
+                <button
+                  key={color.value}
+                  type="button"
+                  onClick={() => { onChange(color.value); setIsOpen(false); }}
+                  className={`w-full px-2 py-1.5 text-xs flex items-center gap-2 hover:bg-accent transition-colors text-left ${
+                    value === color.value ? 'bg-accent' : ''
+                  }`}
+                >
+                  <div className="w-4 h-4 rounded-sm border border-border flex-shrink-0"
+                    style={{ backgroundColor: hex }}
+                  />
+                  <span>{color.name}</span>
+                </button>
+              );
+            })}
 
-                  return (
-                    <button
-                      key={color.value}
-                      type="button"
-                      onClick={() => {
-                        onChange(color.value);
-                        setIsOpen(false);
-                      }}
-                      className={`w-full px-2 py-1.5 text-xs flex items-center gap-2 hover:bg-accent transition-colors text-left ${
-                        isSelected ? 'bg-accent' : ''
-                      }`}
-                    >
-                      <div
-                        className="w-4 h-4 rounded border border-border flex-shrink-0"
-                        style={{ backgroundColor: hexColor }}
-                      />
-                      <span>{color.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* RGB Tab */}
+            {/* RGB tab */}
             {activeTab === 'rgb' && (
               <div className="p-3 space-y-3">
-                <div className="text-[10px] text-muted-foreground mb-2">Custom RGB/Hex Color</div>
-
-                {/* Color Picker */}
                 <div className="flex gap-2 items-center">
                   <input
                     type="color"
                     value={value?.startsWith('#') ? value : '#ffffff'}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-12 h-10 rounded border border-border cursor-pointer"
+                    className="w-10 h-8 rounded border border-border cursor-pointer"
                   />
                   <div className="flex-1">
                     <label className="text-[10px] text-muted-foreground mb-1 block">Hex</label>
@@ -223,64 +247,39 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
                           onChange(e.target.value);
                         }
                       }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          setIsOpen(false);
-                        }
-                      }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') setIsOpen(false); }}
                       placeholder="#ffffff"
-                      className="w-full px-2 py-1 bg-secondary border border-border rounded text-[10px] font-mono"
+                      className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[10px] font-mono focus:border-primary focus:outline-none"
                     />
                   </div>
                 </div>
-
-                {/* RGB Sliders */}
                 <div className="space-y-2">
-                  <RGBSlider
-                    label="R"
-                    color="red"
-                    value={value}
-                    onChange={onChange}
-                  />
-                  <RGBSlider
-                    label="G"
-                    color="green"
-                    value={value}
-                    onChange={onChange}
-                  />
-                  <RGBSlider
-                    label="B"
-                    color="blue"
-                    value={value}
-                    onChange={onChange}
-                  />
+                  <RGBSlider label="R" color="red"   value={value} onChange={onChange} />
+                  <RGBSlider label="G" color="green" value={value} onChange={onChange} />
+                  <RGBSlider label="B" color="blue"  value={value} onChange={onChange} />
                 </div>
-
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="w-full px-2 py-1.5 bg-primary text-primary-foreground rounded text-xs"
+                  className="w-full px-2 py-1 bg-primary text-primary-foreground rounded text-xs"
                 >
                   Done
                 </button>
               </div>
             )}
 
-            {/* Themes Tab */}
+            {/* Themes tab */}
             {activeTab === 'themes' && (
               <div className="p-2">
                 <div className="text-[10px] text-muted-foreground mb-2 px-1">
                   Set theme for nearest Screen
                 </div>
                 {THEME_NAMES.map((theme) => {
-                  // Find the nearest Screen component to apply theme
                   const findScreen = (node: ComponentNode | null): ComponentNode | null => {
                     if (!node) return null;
                     if (node.type === 'Screen') return node;
-                    const parent = componentStore.getParent(node.id);
-                    return findScreen(parent);
+                    return findScreen(componentStore.getParent(node.id));
                   };
-
                   const screenComponent = findScreen(selectedComponent);
 
                   return (
@@ -294,7 +293,7 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
                         }
                       }}
                       disabled={!screenComponent}
-                      className={`w-full px-2 py-2 text-xs text-left hover:bg-accent transition-colors rounded flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed ${
+                      className={`w-full px-2 py-1.5 text-xs text-left hover:bg-accent transition-colors rounded flex items-center justify-between disabled:opacity-50 ${
                         activeThemeName === theme.value ? 'bg-accent' : ''
                       }`}
                     >
@@ -314,64 +313,52 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
   );
 }
 
-// RGB Slider Component
+// ─── RGB Slider ───────────────────────────────────────────────────────────────
+
 function RGBSlider({
-  label,
-  color,
-  value,
-  onChange,
+  label, color, value, onChange,
 }: {
   label: string;
   color: 'red' | 'green' | 'blue';
   value?: string;
   onChange: (color: string) => void;
 }) {
-  // Parse current RGB values from hex
   const getRGB = () => {
     if (!value?.startsWith('#')) return { r: 255, g: 255, b: 255 };
     const hex = value.slice(1);
-    const r = parseInt(hex.slice(0, 2), 16) || 0;
-    const g = parseInt(hex.slice(2, 4), 16) || 0;
-    const b = parseInt(hex.slice(4, 6), 16) || 0;
-    return { r, g, b };
+    return {
+      r: parseInt(hex.slice(0, 2), 16) || 0,
+      g: parseInt(hex.slice(2, 4), 16) || 0,
+      b: parseInt(hex.slice(4, 6), 16) || 0,
+    };
   };
 
   const rgb = getRGB();
-  const currentValue = color === 'red' ? rgb.r : color === 'green' ? rgb.g : rgb.b;
+  const current = color === 'red' ? rgb.r : color === 'green' ? rgb.g : rgb.b;
 
-  const handleChange = (newValue: number) => {
-    const newRgb = { ...rgb };
-    if (color === 'red') newRgb.r = newValue;
-    if (color === 'green') newRgb.g = newValue;
-    if (color === 'blue') newRgb.b = newValue;
-
-    const hex = `#${newRgb.r.toString(16).padStart(2, '0')}${newRgb.g.toString(16).padStart(2, '0')}${newRgb.b.toString(16).padStart(2, '0')}`;
-    onChange(hex);
+  const handleChange = (v: number) => {
+    const n = { ...rgb };
+    if (color === 'red') n.r = v;
+    if (color === 'green') n.g = v;
+    if (color === 'blue') n.b = v;
+    onChange(`#${n.r.toString(16).padStart(2, '0')}${n.g.toString(16).padStart(2, '0')}${n.b.toString(16).padStart(2, '0')}`);
   };
 
   return (
     <div className="flex items-center gap-2">
       <label className="text-[10px] font-medium w-3">{label}</label>
       <input
-        type="range"
-        min="0"
-        max="255"
-        value={currentValue}
+        type="range" min="0" max="255" value={current}
         onChange={(e) => handleChange(parseInt(e.target.value))}
         className="flex-1 h-1"
       />
       <input
-        type="number"
-        min="0"
-        max="255"
-        value={currentValue}
+        type="number" min="0" max="255" value={current}
         onChange={(e) => {
-          const val = parseInt(e.target.value);
-          if (!isNaN(val) && val >= 0 && val <= 255) {
-            handleChange(val);
-          }
+          const v = parseInt(e.target.value);
+          if (!isNaN(v) && v >= 0 && v <= 255) handleChange(v);
         }}
-        className="w-12 px-1.5 py-0.5 bg-secondary border border-border rounded text-[10px] text-center"
+        className="w-10 px-1 py-0.5 bg-input border border-border/50 rounded text-[10px] text-center focus:border-primary focus:outline-none"
       />
     </div>
   );

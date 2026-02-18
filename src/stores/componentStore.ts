@@ -81,7 +81,7 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     };
 
     // If parent is a container and has explicit height/width, change to auto so it fits children
-    if (['Box', 'Flexbox', 'Grid', 'Stack'].includes(parent.type)) {
+    if (['Box', 'Grid'].includes(parent.type)) {
       if (typeof parent.props.height === 'number') {
         parent.props.height = 'auto';
       }

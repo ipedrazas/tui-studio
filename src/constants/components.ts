@@ -65,21 +65,6 @@ export const COMPONENT_LIBRARY: Record<ComponentType, ComponentDefinition> = {
     },
   },
 
-  Flexbox: {
-    type: 'Flexbox',
-    name: 'Flexbox',
-    description: 'Flexible box layout',
-    icon: 'Columns',
-    category: 'layout',
-    defaultProps: {},
-    defaultLayout: {
-      type: 'flexbox',
-      direction: 'row',
-      gap: 1,
-    },
-    defaultStyle: {},
-  },
-
   Grid: {
     type: 'Grid',
     name: 'Grid',
@@ -93,24 +78,6 @@ export const COMPONENT_LIBRARY: Record<ComponentType, ComponentDefinition> = {
       rows: 2,
       columnGap: 1,
       rowGap: 1,
-    },
-    defaultStyle: {},
-  },
-
-  Stack: {
-    type: 'Stack',
-    name: 'Stack',
-    description: 'Vertical or horizontal stack',
-    icon: 'Layers',
-    category: 'layout',
-    defaultProps: {
-      width: 'auto',
-      height: 'auto',
-    },
-    defaultLayout: {
-      type: 'flexbox',
-      direction: 'column',
-      gap: 1,
     },
     defaultStyle: {},
   },
@@ -288,47 +255,12 @@ export const COMPONENT_LIBRARY: Record<ComponentType, ComponentDefinition> = {
     defaultProps: {
       content: 'Text',
       wrap: false,
+      align: 'left',
     },
     defaultLayout: {
       type: 'none',
     },
     defaultStyle: {},
-  },
-
-  Label: {
-    type: 'Label',
-    name: 'Label',
-    description: 'Form label',
-    icon: 'Tag',
-    category: 'display',
-    defaultProps: {
-      content: 'Label:',
-    },
-    defaultLayout: {
-      type: 'none',
-    },
-    defaultStyle: {
-      bold: true,
-    },
-  },
-
-  Badge: {
-    type: 'Badge',
-    name: 'Badge',
-    description: 'Status badge',
-    icon: 'Badge',
-    category: 'display',
-    defaultProps: {
-      content: 'Badge',
-    },
-    defaultLayout: {
-      type: 'none',
-      padding: { top: 0, right: 1, bottom: 0, left: 1 },
-    },
-    defaultStyle: {
-      backgroundColor: 'blue',
-      color: 'white',
-    },
   },
 
   Spinner: {
@@ -604,9 +536,7 @@ export function canHaveChildren(type: import('../types').ComponentType): boolean
   const containerTypes = [
     'Screen',
     'Box',
-    'Flexbox',
     'Grid',
-    'Stack',
     'Modal',
     'Popover',
     'Tabs',

@@ -1,5 +1,7 @@
 // Layout property editor
 
+import { useState } from 'react';
+import { Maximize2, LayoutGrid } from 'lucide-react';
 import { useComponentStore } from '../../stores';
 import type { ComponentNode } from '../../types';
 import { canHaveChildren } from '../../constants/components';
@@ -8,51 +10,156 @@ interface LayoutEditorProps {
   component: ComponentNode;
 }
 
+const input = 'w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none';
+const select = 'w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none';
+const label = 'text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide';
+
+// ─── Edge editor (padding & margin) ──────────────────────────────────────────
+
+type EdgeValue = number | { top: number; right: number; bottom: number; left: number };
+
+function getSide(p: EdgeValue, side: 'top' | 'right' | 'bottom' | 'left'): number {
+  if (typeof p === 'number') return p;
+  return (p as any)?.[side] ?? 0;
+}
+
+function EdgeEditor({
+  label: edgeLabel,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: EdgeValue | undefined;
+  onChange: (v: EdgeValue) => void;
+}) {
+  const isObj = typeof value === 'object' && value !== null;
+  const [individual, setIndividual] = useState(isObj);
+
+  const uniform = typeof value === 'number' ? value : 0;
+
+  const toggleIndividual = () => {
+    if (individual) {
+      onChange(getSide(value ?? 0, 'top'));
+    } else {
+      const u = typeof value === 'number' ? value : 0;
+      onChange({ top: u, right: u, bottom: u, left: u });
+    }
+    setIndividual(!individual);
+  };
+
+  const setAll = (v: number) => onChange(v);
+
+  const setSide = (side: 'top' | 'right' | 'bottom' | 'left', v: number) => {
+    onChange({
+      top:    getSide(value ?? 0, 'top'),
+      right:  getSide(value ?? 0, 'right'),
+      bottom: getSide(value ?? 0, 'bottom'),
+      left:   getSide(value ?? 0, 'left'),
+      [side]: v,
+    });
+  };
+
+  const sides = [
+    { side: 'top'    as const, icon: '↑', title: 'Top' },
+    { side: 'right'  as const, icon: '→', title: 'Right' },
+    { side: 'bottom' as const, icon: '↓', title: 'Bottom' },
+    { side: 'left'   as const, icon: '←', title: 'Left' },
+  ];
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className={label}>{edgeLabel}</span>
+        <button
+          onClick={toggleIndividual}
+          title={individual ? 'Uniform' : 'Individual sides'}
+          className={`w-5 h-5 flex items-center justify-center rounded border transition-colors ${
+            individual
+              ? 'bg-primary text-primary-foreground border-primary'
+              : 'bg-input border-border/50 text-muted-foreground hover:bg-accent'
+          }`}
+        >
+          {individual
+            ? <LayoutGrid size={12} />
+            : <Maximize2 size={12} />}
+        </button>
+      </div>
+
+      {!individual ? (
+        <div className="flex items-center gap-1">
+          <Maximize2 size={12} className="text-muted-foreground flex-shrink-0" />
+          <input
+            type="number"
+            value={uniform}
+            onChange={(e) => setAll(parseInt(e.target.value) || 0)}
+            min={0}
+            className={input}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-1">
+          {sides.map(({ side, icon, title }) => (
+            <div key={side} className="flex items-center gap-1">
+              <span className="text-[10px] text-muted-foreground font-mono w-4 text-center" title={title}>
+                {icon}
+              </span>
+              <input
+                type="number"
+                value={getSide(value ?? 0, side)}
+                onChange={(e) => setSide(side, parseInt(e.target.value) || 0)}
+                min={0}
+                className={input}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main editor ─────────────────────────────────────────────────────────────
+
 export function LayoutEditor({ component }: LayoutEditorProps) {
   const updateLayout = useComponentStore(state => state.updateLayout);
 
-  const handleUpdate = (updates: Partial<ComponentNode['layout']>) => {
-    updateLayout(component.id, updates);
-  };
+  const upd = (updates: Partial<ComponentNode['layout']>) => updateLayout(component.id, updates);
 
   const isTabs = component.type === 'Tabs';
   const isLeaf = !canHaveChildren(component.type);
 
   return (
-    <div className="space-y-4">
-      {/* Position (X, Y) - Always visible for absolute positioning */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">Position</label>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">X (columns)</label>
-            <input
-              type="number"
-              value={component.layout.x || 0}
-              onChange={(e) => handleUpdate({ x: parseInt(e.target.value) || 0 })}
-              className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Y (rows)</label>
-            <input
-              type="number"
-              value={component.layout.y || 0}
-              onChange={(e) => handleUpdate({ y: parseInt(e.target.value) || 0 })}
-              className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
-            />
-          </div>
+    <div className="space-y-2">
+      {/* Position */}
+      <div className="grid grid-cols-2 gap-1.5">
+        <div>
+          <label className={label}>X</label>
+          <input
+            type="number"
+            value={component.layout.x || 0}
+            onChange={(e) => upd({ x: parseInt(e.target.value) || 0 })}
+            className={input}
+          />
+        </div>
+        <div>
+          <label className={label}>Y</label>
+          <input
+            type="number"
+            value={component.layout.y || 0}
+            onChange={(e) => upd({ y: parseInt(e.target.value) || 0 })}
+            className={input}
+          />
         </div>
       </div>
 
-      {/* Tabs: only show tab alignment */}
+      {/* Tabs: only tab alignment */}
       {isTabs && (
         <div>
-          <label className="text-sm font-medium mb-2 block">Tab Alignment</label>
+          <label className={label}>Tab Alignment</label>
           <select
             value={(component.layout as any).justify || 'start'}
-            onChange={(e) => handleUpdate({ justify: e.target.value as any })}
-            className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
+            onChange={(e) => upd({ justify: e.target.value as any })}
+            className={select}
           >
             <option value="start">Left</option>
             <option value="center">Center</option>
@@ -61,15 +168,15 @@ export function LayoutEditor({ component }: LayoutEditorProps) {
         </div>
       )}
 
-      {/* Layout Type - only for non-leaf, non-Tabs containers */}
+      {/* Container options */}
       {!isLeaf && !isTabs && (
         <>
           <div>
-            <label className="text-sm font-medium mb-2 block">Layout Type</label>
+            <label className={label}>Layout</label>
             <select
               value={component.layout.type}
-              onChange={(e) => handleUpdate({ type: e.target.value as any })}
-              className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
+              onChange={(e) => upd({ type: e.target.value as any })}
+              className={select}
             >
               <option value="none">None</option>
               <option value="flexbox">Flexbox</option>
@@ -78,124 +185,119 @@ export function LayoutEditor({ component }: LayoutEditorProps) {
             </select>
           </div>
 
-          {/* Flexbox Options */}
           {component.layout.type === 'flexbox' && (
             <>
-              <div>
-                <label className="text-sm font-medium mb-2 block">Direction</label>
-                <select
-                  value={['List', 'Tree'].includes(component.type) ? 'column' : component.layout.direction}
-                  onChange={(e) => handleUpdate({ direction: e.target.value as any })}
-                  disabled={['List', 'Tree'].includes(component.type)}
-                  className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <option value="row">Row (→)</option>
-                  <option value="column">Column (↓)</option>
-                </select>
-                {['List', 'Tree'].includes(component.type) && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    {component.type === 'Tree' ? 'Trees are always vertical' : 'Lists are always vertical'}
-                  </div>
-                )}
+              <div className="grid grid-cols-2 gap-1.5">
+                <div>
+                  <label className={label}>Direction</label>
+                  <select
+                    value={['List', 'Tree'].includes(component.type) ? 'column' : component.layout.direction}
+                    onChange={(e) => upd({ direction: e.target.value as any })}
+                    disabled={['List', 'Tree'].includes(component.type)}
+                    className={select + ' disabled:opacity-50'}
+                  >
+                    <option value="row">Row →</option>
+                    <option value="column">Column ↓</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={label}>Gap</label>
+                  <input
+                    type="number"
+                    value={component.layout.gap || 0}
+                    onChange={(e) => upd({ gap: parseInt(e.target.value) || 0 })}
+                    min={0}
+                    className={input}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">Justify</label>
-                <select
-                  value={component.layout.justify}
-                  onChange={(e) => handleUpdate({ justify: e.target.value as any })}
-                  className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
-                >
-                  <option value="start">Start</option>
-                  <option value="center">Center</option>
-                  <option value="end">End</option>
-                  <option value="space-between">Space Between</option>
-                  <option value="space-around">Space Around</option>
-                </select>
+              <div className="grid grid-cols-2 gap-1.5">
+                <div>
+                  <label className={label}>Justify</label>
+                  <select
+                    value={component.layout.justify}
+                    onChange={(e) => upd({ justify: e.target.value as any })}
+                    className={select}
+                  >
+                    <option value="start">Start</option>
+                    <option value="center">Center</option>
+                    <option value="end">End</option>
+                    <option value="space-between">Between</option>
+                    <option value="space-around">Around</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={label}>Align</label>
+                  <select
+                    value={component.layout.align}
+                    onChange={(e) => upd({ align: e.target.value as any })}
+                    className={select}
+                  >
+                    <option value="start">Start</option>
+                    <option value="center">Center</option>
+                    <option value="end">End</option>
+                    <option value="stretch">Stretch</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">Align</label>
-                <select
-                  value={component.layout.align}
-                  onChange={(e) => handleUpdate({ align: e.target.value as any })}
-                  className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
-                >
-                  <option value="start">Start</option>
-                  <option value="center">Center</option>
-                  <option value="end">End</option>
-                  <option value="stretch">Stretch</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Gap</label>
-                <input
-                  type="number"
-                  value={component.layout.gap || 0}
-                  onChange={(e) => handleUpdate({ gap: parseInt(e.target.value) || 0 })}
-                  min={0}
-                  className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <input
                   type="checkbox"
                   id="wrap"
                   checked={component.layout.wrap || false}
-                  onChange={(e) => handleUpdate({ wrap: e.target.checked })}
+                  onChange={(e) => upd({ wrap: e.target.checked })}
+                  className="w-3 h-3"
                 />
-                <label htmlFor="wrap" className="text-sm">Wrap</label>
+                <label htmlFor="wrap" className="text-[11px]">Wrap</label>
               </div>
             </>
           )}
 
-          {/* Grid Options */}
           {component.layout.type === 'grid' && (
             <>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Columns</label>
+                  <label className={label}>Columns</label>
                   <input
                     type="number"
                     value={component.layout.columns || 2}
-                    onChange={(e) => handleUpdate({ columns: parseInt(e.target.value) || 2 })}
+                    onChange={(e) => upd({ columns: parseInt(e.target.value) || 2 })}
                     min={1}
-                    className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
+                    className={input}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Rows</label>
+                  <label className={label}>Rows</label>
                   <input
                     type="number"
                     value={component.layout.rows || 2}
-                    onChange={(e) => handleUpdate({ rows: parseInt(e.target.value) || 2 })}
+                    onChange={(e) => upd({ rows: parseInt(e.target.value) || 2 })}
                     min={1}
-                    className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
+                    className={input}
                   />
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Column Gap</label>
+                  <label className={label}>Col Gap</label>
                   <input
                     type="number"
                     value={component.layout.columnGap || 0}
-                    onChange={(e) => handleUpdate({ columnGap: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => upd({ columnGap: parseInt(e.target.value) || 0 })}
                     min={0}
-                    className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
+                    className={input}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Row Gap</label>
+                  <label className={label}>Row Gap</label>
                   <input
                     type="number"
                     value={component.layout.rowGap || 0}
-                    onChange={(e) => handleUpdate({ rowGap: parseInt(e.target.value) || 0 })}
+                    onChange={(e) => upd({ rowGap: parseInt(e.target.value) || 0 })}
                     min={0}
-                    className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
+                    className={input}
                   />
                 </div>
               </div>
@@ -206,29 +308,13 @@ export function LayoutEditor({ component }: LayoutEditorProps) {
 
       {/* Padding */}
       {!isTabs && (
-        <div>
-          <label className="text-sm font-medium mb-2 block">Padding</label>
-          <input
-            type="number"
-            value={typeof component.layout.padding === 'number' ? component.layout.padding : 0}
-            onChange={(e) => handleUpdate({ padding: parseInt(e.target.value) || 0 })}
-            min={0}
-            className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
-          />
-        </div>
+        <EdgeEditor
+          label="Padding"
+          value={component.layout.padding}
+          onChange={(v) => upd({ padding: v })}
+        />
       )}
 
-      {/* Margin */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">Margin</label>
-        <input
-          type="number"
-          value={typeof component.layout.margin === 'number' ? component.layout.margin : 0}
-          onChange={(e) => handleUpdate({ margin: parseInt(e.target.value) || 0 })}
-          min={0}
-          className="w-full px-3 py-2 bg-secondary border border-border rounded text-sm"
-        />
-      </div>
     </div>
   );
 }

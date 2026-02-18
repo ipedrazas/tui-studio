@@ -56,12 +56,6 @@ export function renderComponent(node: ComponentNode, width: number, height: numb
     case 'Table':
       content = renderTable(node, width, height);
       break;
-    case 'Badge':
-      content = renderBadge(node, width, height);
-      break;
-    case 'Label':
-      content = renderLabel(node, width, height);
-      break;
     default:
       // Container or unknown type
       content = renderContainer(node, width, height);
@@ -76,6 +70,11 @@ export function renderComponent(node: ComponentNode, width: number, height: numb
       bottom: node.style.borderBottom !== false,
       left: node.style.borderLeft !== false,
       right: node.style.borderRight !== false,
+      topStyle:    node.style.borderTopStyle,
+      rightStyle:  node.style.borderRightStyle,
+      bottomStyle: node.style.borderBottomStyle,
+      leftStyle:   node.style.borderLeftStyle,
+      corners: node.style.borderCorners !== false,
     };
     content = renderBox(content, width, height, borderConfig);
   }
@@ -319,36 +318,6 @@ function renderTable(node: ComponentNode, width: number, height: number): string
     lines.push(rowLine.slice(0, contentArea.width).padEnd(contentArea.width));
   }
 
-  while (lines.length < contentArea.height) {
-    lines.push(' '.repeat(contentArea.width));
-  }
-
-  return lines;
-}
-
-function renderBadge(node: ComponentNode, width: number, height: number): string[] {
-  const text = (node.props.text as string) || 'Badge';
-  const contentArea = node.style.border ? getContentArea(width, height, { style: 'single' }) : { width, height };
-
-  const badgeText = ` ${text} `;
-  const truncated = truncateText(badgeText, contentArea.width);
-  const padded = padText(truncated, contentArea.width, 'center');
-
-  const lines = [padded];
-  while (lines.length < contentArea.height) {
-    lines.push(' '.repeat(contentArea.width));
-  }
-
-  return lines;
-}
-
-function renderLabel(node: ComponentNode, width: number, height: number): string[] {
-  const text = (node.props.text as string) || 'Label:';
-  const contentArea = node.style.border ? getContentArea(width, height, { style: 'single' }) : { width, height };
-
-  const truncated = truncateText(text, contentArea.width);
-
-  const lines = [truncated.padEnd(contentArea.width)];
   while (lines.length < contentArea.height) {
     lines.push(' '.repeat(contentArea.width));
   }

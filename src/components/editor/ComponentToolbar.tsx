@@ -9,8 +9,10 @@ import {
   Menu as MenuIcon,
   Layers,
   ChevronDown,
-  Settings,
-  GripVertical
+  ChevronRight,
+  Ellipsis,
+  GripVertical,
+  GripHorizontal,
 } from 'lucide-react';
 import { ComponentType } from '../../types';
 import { dragStore } from '../../hooks/useDragAndDrop';
@@ -62,10 +64,8 @@ const COMPONENT_GROUPS: ComponentGroup[] = [
     name: 'Layout',
     icon: LayoutGrid,
     items: [
-      { type: 'Flexbox', label: 'Flexbox', hotkey: 'F' },
       { type: 'Box', label: 'Box', hotkey: 'X' },
       { type: 'Grid', label: 'Grid', hotkey: 'G' },
-      { type: 'Stack', label: 'Stack', hotkey: 'S' },
       { type: 'Spacer', label: 'Spacer', hotkey: 'J' },
     ],
   },
@@ -88,8 +88,7 @@ const COMPONENT_GROUPS: ComponentGroup[] = [
     icon: Eye,
     items: [
       { type: 'Text', label: 'Text', hotkey: 'Y' },
-      { type: 'Label', label: 'Label', hotkey: 'L' },
-      { type: 'Badge', label: 'Badge', hotkey: 'W' },
+
       { type: 'Spinner', label: 'Spinner', hotkey: 'N' },
       { type: 'ProgressBar', label: 'Progress Bar', hotkey: 'P' },
     ],
@@ -144,6 +143,10 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
     const saved = localStorage.getItem('toolbar-docked');
     return saved ? JSON.parse(saved) : docked;
   });
+  const [isVertical, setIsVertical] = useState(() => {
+    const saved = localStorage.getItem('toolbar-vertical');
+    return saved ? JSON.parse(saved) : false;
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
@@ -156,6 +159,10 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
     // Dispatch custom event to notify other components
     window.dispatchEvent(new CustomEvent('toolbar-docked-changed', { detail: isDockedState }));
   }, [isDockedState]);
+
+  useEffect(() => {
+    localStorage.setItem('toolbar-vertical', JSON.stringify(isVertical));
+  }, [isVertical]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -435,7 +442,8 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
                         key={item.type}
                         onClick={() => addComponentDirectly(item.type, group.id)}
                         draggable
-                        onDragStart={() => {
+                        onDragStart={(e) => {
+                          e.dataTransfer.setDragImage(e.currentTarget, 0, 0);
                           dragStore.startDrag({
                             type: 'new-component',
                             componentType: item.type,
@@ -494,9 +502,16 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
                     setIsDockedState(false);
                     setShowSettings(false);
                   }}
-                  className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-accent transition-colors text-left"
+                  className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-accent transition-colors text-left border-b border-border"
                 >
                   <span className="text-xs">Undock from Top Bar</span>
+                </button>
+                <button
+                  onClick={() => setIsVertical(!isVertical)}
+                  className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-accent transition-colors text-left"
+                >
+                  <span className="text-xs">Vertical Layout</span>
+                  {isVertical && <span className="text-primary text-xs">✓</span>}
                 </button>
               </div>
             </div>
@@ -514,7 +529,7 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
             }`}
             title="Toolbar Settings"
           >
-            <Settings size={16} className="text-muted-foreground" />
+            <Ellipsis size={16} className="text-muted-foreground" />
           </button>
         </div>
       </div>
@@ -528,14 +543,17 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
       className={`absolute z-50 ${isDragging ? 'cursor-grabbing' : ''}`}
       style={getPositionStyle()}
     >
-      <div className="flex items-center gap-2 bg-card border border-border rounded-lg shadow-2xl p-1">
+      <div className={`${isVertical ? 'flex-col items-center' : 'flex items-center'} gap-2 bg-card border border-border rounded-lg shadow-2xl p-1`}>
         {/* Drag Handle */}
         <button
           onMouseDown={handleDragStart}
-          className="flex items-center px-1 py-2 cursor-grab hover:bg-accent rounded transition-colors"
+          className={`flex items-center justify-center ${isVertical ? 'px-2 py-1 w-full' : 'px-1 py-2'} cursor-grab hover:bg-accent rounded transition-colors`}
           title="Drag to reposition"
         >
-          <GripVertical size={16} className="text-muted-foreground/50" />
+          {isVertical
+            ? <GripHorizontal size={16} className="text-muted-foreground/50" />
+            : <GripVertical size={16} className="text-muted-foreground/50" />
+          }
         </button>
         {COMPONENT_GROUPS.map((group) => {
           const Icon = group.icon;
@@ -546,14 +564,17 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
             <div key={group.id} className="relative" ref={isOpen ? dropdownRef : null}>
               {/* Dropdown Menu */}
               {isOpen && (
-                <div className="absolute bottom-full left-0 mb-2 min-w-[180px] bg-card border border-border rounded-lg shadow-xl overflow-hidden">
+                <div className={`absolute min-w-[180px] bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50 ${
+                  isVertical ? 'top-0 left-full ml-2' : 'bottom-full left-0 mb-2'
+                }`}>
                   <div className="py-1">
                     {group.items.map((item) => (
                       <button
                         key={item.type}
                         onClick={() => addComponentDirectly(item.type, group.id)}
                         draggable
-                        onDragStart={() => {
+                        onDragStart={(e) => {
+                          e.dataTransfer.setDragImage(e.currentTarget, 0, 0);
                           dragStore.startDrag({
                             type: 'new-component',
                             componentType: item.type,
@@ -589,22 +610,33 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
                 title={group.name}
               >
                 <Icon size={24} className={isActive ? 'text-primary-foreground' : ''} />
-                <ChevronDown
-                  size={10}
-                  className={`transition-transform ${isOpen ? 'rotate-180' : ''} ${
-                    isActive ? 'text-primary-foreground' : 'text-muted-foreground'
-                  }`}
-                />
+                {isVertical ? (
+                  <ChevronRight
+                    size={10}
+                    className={`transition-transform ${isOpen ? 'rotate-90' : ''} ${
+                      isActive ? 'text-primary-foreground' : 'text-muted-foreground'
+                    }`}
+                  />
+                ) : (
+                  <ChevronDown
+                    size={10}
+                    className={`transition-transform ${isOpen ? 'rotate-180' : ''} ${
+                      isActive ? 'text-primary-foreground' : 'text-muted-foreground'
+                    }`}
+                  />
+                )}
               </button>
             </div>
           );
         })}
 
         {/* Settings Button */}
-        <div className="relative ml-1 pl-2 border-l border-border" ref={settingsRef}>
+        <div className={`relative ${isVertical ? 'mt-1 pt-2 border-t border-border' : 'ml-1 pl-2 border-l border-border'}`} ref={settingsRef}>
           {/* Position Dropdown */}
           {showSettings && (
-            <div className="absolute bottom-full left-0 mb-2 min-w-[160px] bg-card border border-border rounded-lg shadow-xl overflow-hidden">
+            <div className={`absolute min-w-[160px] bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50 ${
+              isVertical ? 'top-0 left-full ml-2' : 'bottom-full left-0 mb-2'
+            }`}>
               <div className="py-1">
                 <button
                   onClick={() => {
@@ -614,6 +646,13 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
                   className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-accent transition-colors text-left border-b border-border"
                 >
                   <span className="text-xs font-semibold">Dock to Top Bar</span>
+                </button>
+                <button
+                  onClick={() => setIsVertical(!isVertical)}
+                  className="w-full flex items-center justify-between px-3 py-1.5 hover:bg-accent transition-colors text-left border-b border-border"
+                >
+                  <span className="text-xs">Vertical Layout</span>
+                  {isVertical && <span className="text-primary text-xs">✓</span>}
                 </button>
                 <div className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground">
                   Toolbar Position
@@ -639,12 +678,12 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
           {/* Settings Button */}
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className={`flex items-center gap-1 px-2 py-2 rounded transition-colors ${
+            className={`flex items-center justify-center gap-1 px-2 py-2 rounded transition-colors ${isVertical ? 'w-full' : ''} ${
               showSettings ? 'bg-accent' : 'hover:bg-accent'
             }`}
             title="Toolbar Settings"
           >
-            <Settings size={18} className="text-muted-foreground" />
+            <Ellipsis size={18} className="text-muted-foreground" />
           </button>
         </div>
       </div>

@@ -536,12 +536,29 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
         if (isHorizontal) {
           const gap = typeof node.layout.gap === 'number' ? node.layout.gap : 0;
           const gapStr = '\u00A0'.repeat(gap);
+          const justifyMap: Record<string, string> = {
+            start: 'flex-start', center: 'center', end: 'flex-end',
+            'space-between': 'space-between', between: 'space-between',
+            'space-around': 'space-around', around: 'space-around',
+            'space-evenly': 'space-evenly', evenly: 'space-evenly',
+          };
+          const alignMap: Record<string, string> = {
+            start: 'flex-start', center: 'center', end: 'flex-end',
+          };
+          const justify = (node.layout as any).justify as string | undefined;
+          const align = (node.layout as any).align as string | undefined;
           return (
-            <div className="font-mono text-xs flex items-center whitespace-pre">
+            <div
+              className="font-mono text-xs flex whitespace-pre w-full h-full"
+              style={{
+                justifyContent: justifyMap[justify || ''] || 'flex-start',
+                alignItems: alignMap[align || ''] || 'center',
+              }}
+            >
               {items.map((item, i) => {
                 const itemData = typeof item === 'string' ? { label: item, icon: '', hotkey: '', separator: false } : item;
                 return (
-                  <span key={i}>
+                  <span key={i} className="flex-shrink-0">
                     {itemData.icon && `${itemData.icon} `}
                     {itemData.label}
                     {itemData.hotkey && <span className="text-muted-foreground">{` ${itemData.hotkey}`}</span>}
@@ -911,7 +928,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
           alignItems: 'center',
           justifyContent: node.type === 'Text'
             ? ((node.props.align === 'right') ? 'flex-end' : (node.props.align === 'center') ? 'center' : 'flex-start')
-            : ['Checkbox', 'Radio'].includes(node.type) ? 'flex-start' : 'center',
+            : ['Checkbox', 'Radio', 'Menu'].includes(node.type) ? 'flex-start' : 'center',
           padding: node.layout.padding !== undefined
             ? `${node.layout.padding * cellHeight * zoom}px ${node.layout.padding * cellWidth * zoom}px`
             : undefined,

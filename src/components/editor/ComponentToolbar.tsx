@@ -433,7 +433,7 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
             >
               {/* Dropdown Menu */}
               {isOpen && (
-                <div className={`absolute left-0 min-w-[180px] bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50 max-h-[400px] overflow-y-auto ${
+                <div className={`absolute left-0 min-w-[180px] bg-card border border-border rounded-lg  overflow-hidden z-50 max-h-[400px] overflow-y-auto ${
                   dropdownPosition === 'above' ? 'bottom-full mb-2' : 'top-full mt-2'
                 }`}>
                   <div className="py-1">
@@ -493,7 +493,7 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
         {/* Settings for docked mode */}
         <div className="relative ml-1 pl-2 border-l border-border" ref={settingsRef}>
           {showSettings && (
-            <div className={`absolute left-0 min-w-[160px] bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50 max-h-[400px] overflow-y-auto ${
+            <div className={`absolute left-0 min-w-[160px] bg-card border border-border rounded-lg  overflow-hidden z-50 max-h-[400px] overflow-y-auto ${
               dropdownPosition === 'above' ? 'bottom-full mb-2' : 'top-full mt-2'
             }`}>
               <div className="py-1">
@@ -543,7 +543,7 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
       className={`absolute z-50 ${isDragging ? 'cursor-grabbing' : ''}`}
       style={getPositionStyle()}
     >
-      <div className={`${isVertical ? 'flex-col items-center' : 'flex items-center'} gap-2 bg-card border border-border rounded-lg shadow-2xl p-1`}>
+      <div className={`${isVertical ? 'flex-col items-center' : 'flex items-center'} gap-2 bg-card border border-border rounded-lg  p-1`}>
         {/* Drag Handle */}
         <button
           onMouseDown={handleDragStart}
@@ -564,7 +564,7 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
             <div key={group.id} className="relative" ref={isOpen ? dropdownRef : null}>
               {/* Dropdown Menu */}
               {isOpen && (
-                <div className={`absolute min-w-[180px] bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50 ${
+                <div className={`absolute min-w-[180px] bg-card border border-border rounded-lg  overflow-hidden z-50 ${
                   isVertical ? 'top-0 left-full ml-2' : 'bottom-full left-0 mb-2'
                 }`}>
                   <div className="py-1">
@@ -634,7 +634,7 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
         <div className={`relative ${isVertical ? 'mt-1 pt-2 border-t border-border' : 'ml-1 pl-2 border-l border-border'}`} ref={settingsRef}>
           {/* Position Dropdown */}
           {showSettings && (
-            <div className={`absolute min-w-[160px] bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50 ${
+            <div className={`absolute min-w-[160px] bg-card border border-border rounded-lg  overflow-hidden z-50 ${
               isVertical ? 'top-0 left-full ml-2' : 'bottom-full left-0 mb-2'
             }`}>
               <div className="py-1">

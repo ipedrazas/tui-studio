@@ -471,6 +471,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
       case 'Checkbox': {
         const checkedIcon = (node.props.checkedIcon as string) || '✓';
         const uncheckedIcon = (node.props.uncheckedIcon as string) || ' ';
+        const showBrackets = node.props.showBrackets !== false;
         const checked = node.props.checked as boolean;
         const label = (node.props.label as string) || 'Checkbox';
         const iconColor = checked
@@ -479,7 +480,9 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
         const icon = checked ? checkedIcon : uncheckedIcon;
         return (
           <span className="font-mono">
-            <span className={iconColor}>[{icon}]</span>
+            <span className={iconColor}>
+              {showBrackets ? `[${icon}]` : icon}
+            </span>
             <span className={getColorClass((node.style.labelColor as string) || 'white')}> {label}</span>
           </span>
         );
@@ -487,6 +490,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
       case 'Radio': {
         const selectedIcon = (node.props.selectedIcon as string) || '●';
         const unselectedIcon = (node.props.unselectedIcon as string) || '○';
+        const showBrackets = node.props.showBrackets !== false;
         const checked = node.props.checked as boolean;
         const label = (node.props.label as string) || 'Option';
         const iconColor = checked
@@ -495,9 +499,34 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
         const icon = checked ? selectedIcon : unselectedIcon;
         return (
           <span className="font-mono">
-            <span className={iconColor}>({icon})</span>
+            <span className={iconColor}>
+              {showBrackets ? `(${icon})` : icon}
+            </span>
             <span className={getColorClass((node.style.labelColor as string) || 'white')}> {label}</span>
           </span>
+        );
+      }
+      case 'Table': {
+        const columns = (node.props.columns as string[]) || ['Col 1', 'Col 2'];
+        const rows = (node.props.rows as string[][]) || [];
+        const numCols = columns.length;
+        // Distribute width evenly across columns, accounting for separators
+        const totalSepWidth = numCols + 1; // | borders
+        const availWidth = Math.max(numCols, layout.width - totalSepWidth);
+        const colW = Math.max(3, Math.floor(availWidth / numCols));
+        const fit = (s: string) => {
+          const str = String(s ?? '');
+          return str.length > colW ? str.slice(0, colW - 1) + '…' : str.padEnd(colW);
+        };
+        const divider = columns.map(() => '─'.repeat(colW)).join('┼');
+        return (
+          <div className="font-mono text-xs whitespace-pre leading-none w-full">
+            <div className="text-muted-foreground">{columns.map(c => fit(c)).join(' ')}</div>
+            <div className="text-border">{divider}</div>
+            {rows.map((row, ri) => (
+              <div key={ri}>{columns.map((_, ci) => fit(row[ci] ?? '')).join(' ')}</div>
+            ))}
+          </div>
         );
       }
       case 'Spinner':
@@ -615,16 +644,28 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
       }
       case 'Breadcrumb': {
         const items = (node.props.items as any[]) || [];
-        const separator = (node.props.separator as string) || ' / ';
+        const separator = (node.props.separator as string) || '/';
+        const availWidth = layout.width;
+        // Build full text to check if it fits
+        const parts = items.map((item: any) => {
+          const d = typeof item === 'string' ? { label: item, icon: '' } : item;
+          return d.icon ? `${d.icon} ${d.label}` : d.label;
+        });
+        const fullText = parts.join(` ${separator} `);
+        const needsTruncation = fullText.length > availWidth;
         return (
-          <div className="font-mono text-xs flex items-center">
-            {items.map((item, i) => {
-              const itemData = typeof item === 'string' ? { label: item, icon: '' } : item;
+          <div className="font-mono text-xs flex items-center overflow-hidden whitespace-nowrap">
+            {items.map((item: any, i: number) => {
+              const d = typeof item === 'string' ? { label: item, icon: '' } : item;
+              const isLast = i === items.length - 1;
+              // Truncate middle items when space is tight (keep first and last)
+              let label = d.label as string;
+              if (needsTruncation && !isLast && i > 0) label = '…';
               return (
-                <span key={i}>
-                  {itemData.icon && `${itemData.icon} `}
-                  {itemData.label}
-                  {i < items.length - 1 && <span className="text-muted-foreground">{separator}</span>}
+                <span key={i} className="flex items-center">
+                  {d.icon && <span className="mr-0.5">{d.icon}</span>}
+                  <span>{label}</span>
+                  {!isLast && <span className="text-muted-foreground mx-0.5">{separator}</span>}
                 </span>
               );
             })}

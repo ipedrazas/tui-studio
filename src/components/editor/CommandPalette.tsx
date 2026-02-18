@@ -156,7 +156,7 @@ export function CommandPalette({ isOpen, onClose, onAddComponent }: CommandPalet
       onClick={onClose}
     >
       <div
-        className="bg-card border border-border rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden"
+        className="bg-card border border-border rounded-lg w-full max-w-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input */}

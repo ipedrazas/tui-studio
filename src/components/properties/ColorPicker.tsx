@@ -173,7 +173,7 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
 
       {/* Popup — color selector */}
       {isOpen && (
-        <div className="absolute z-50 left-0 mt-1 w-48 bg-popover border border-border rounded-md shadow-lg flex flex-col"
+        <div className="absolute z-50 left-0 mt-1 w-48 bg-popover border border-border rounded-md flex flex-col"
           style={{ top: '100%' }}
         >
           {/* Tabs */}

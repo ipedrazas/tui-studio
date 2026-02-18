@@ -147,7 +147,7 @@ export function Toolbar() {
         </button>
         <button
           onClick={() => setExportOpen(true)}
-          className="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center gap-2 font-medium transition-colors shadow-lg shadow-primary/20"
+          className="px-4 py-2 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg flex items-center gap-2 font-medium transition-colors"
         >
           <Download className="w-4 h-4" />
           Export

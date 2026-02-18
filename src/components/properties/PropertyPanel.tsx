@@ -275,7 +275,7 @@ function GlyphPicker({ onInsert }: { onInsert: (glyph: string) => void }) {
         Ω
       </button>
       {open && (
-        <div className="absolute right-0 top-6 z-50 w-56 bg-popover border border-border rounded-lg shadow-lg">
+        <div className="absolute right-0 top-6 z-50 w-56 bg-popover border border-border rounded-lg">
           {/* Category tabs */}
           <div className="flex flex-wrap gap-0.5 p-1.5 border-b border-border/50">
             {GLYPHS.map((cat, i) => (
@@ -454,23 +454,35 @@ function ComponentProps({ component }: { component: import('../../types').Compon
             <input
               type="text"
               value={(component.props.label as string) || ''}
-              onChange={(e) =>
-                componentStore.updateProps(component.id, { label: e.target.value })
-              }
+              onChange={(e) => componentStore.updateProps(component.id, { label: e.target.value })}
               className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
             />
           </div>
           <div className="flex items-center gap-1.5">
-            <input
-              type="checkbox"
-              id="checked"
-              checked={component.props.checked as boolean || false}
-              onChange={(e) =>
-                componentStore.updateProps(component.id, { checked: e.target.checked })
-              }
-              className="w-3 h-3"
-            />
-            <label htmlFor="checked" className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Checked</label>
+            <input type="checkbox" checked={component.props.checked as boolean || false}
+              onChange={(e) => componentStore.updateProps(component.id, { checked: e.target.checked })}
+              className="w-3 h-3" />
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Checked</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <input type="checkbox" checked={component.props.showBrackets !== false}
+              onChange={(e) => componentStore.updateProps(component.id, { showBrackets: e.target.checked })}
+              className="w-3 h-3" />
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Show brackets [ ]</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wide w-16">Checked</span>
+            <input type="text" value={(component.props.checkedIcon as string) || '✓'}
+              onChange={(e) => componentStore.updateProps(component.id, { checkedIcon: e.target.value })}
+              className="w-8 px-1 py-0.5 bg-input border border-border/50 rounded text-[11px] text-center font-mono focus:border-primary focus:outline-none" />
+            <GlyphPicker onInsert={(g) => componentStore.updateProps(component.id, { checkedIcon: g })} />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wide w-16">Unchecked</span>
+            <input type="text" value={(component.props.uncheckedIcon as string) || ' '}
+              onChange={(e) => componentStore.updateProps(component.id, { uncheckedIcon: e.target.value })}
+              className="w-8 px-1 py-0.5 bg-input border border-border/50 rounded text-[11px] text-center font-mono focus:border-primary focus:outline-none" />
+            <GlyphPicker onInsert={(g) => componentStore.updateProps(component.id, { uncheckedIcon: g })} />
           </div>
         </>
       )}
@@ -483,23 +495,35 @@ function ComponentProps({ component }: { component: import('../../types').Compon
             <input
               type="text"
               value={(component.props.label as string) || ''}
-              onChange={(e) =>
-                componentStore.updateProps(component.id, { label: e.target.value })
-              }
+              onChange={(e) => componentStore.updateProps(component.id, { label: e.target.value })}
               className="w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none"
             />
           </div>
           <div className="flex items-center gap-1.5">
-            <input
-              type="checkbox"
-              id="checked"
-              checked={component.props.checked as boolean || false}
-              onChange={(e) =>
-                componentStore.updateProps(component.id, { checked: e.target.checked })
-              }
-              className="w-3 h-3"
-            />
-            <label htmlFor="checked" className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Selected</label>
+            <input type="checkbox" checked={component.props.checked as boolean || false}
+              onChange={(e) => componentStore.updateProps(component.id, { checked: e.target.checked })}
+              className="w-3 h-3" />
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Selected</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <input type="checkbox" checked={component.props.showBrackets !== false}
+              onChange={(e) => componentStore.updateProps(component.id, { showBrackets: e.target.checked })}
+              className="w-3 h-3" />
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Show brackets ( )</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wide w-16">Selected</span>
+            <input type="text" value={(component.props.selectedIcon as string) || '●'}
+              onChange={(e) => componentStore.updateProps(component.id, { selectedIcon: e.target.value })}
+              className="w-8 px-1 py-0.5 bg-input border border-border/50 rounded text-[11px] text-center font-mono focus:border-primary focus:outline-none" />
+            <GlyphPicker onInsert={(g) => componentStore.updateProps(component.id, { selectedIcon: g })} />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wide w-16">Unselected</span>
+            <input type="text" value={(component.props.unselectedIcon as string) || '○'}
+              onChange={(e) => componentStore.updateProps(component.id, { unselectedIcon: e.target.value })}
+              className="w-8 px-1 py-0.5 bg-input border border-border/50 rounded text-[11px] text-center font-mono focus:border-primary focus:outline-none" />
+            <GlyphPicker onInsert={(g) => componentStore.updateProps(component.id, { unselectedIcon: g })} />
           </div>
         </>
       )}
@@ -565,6 +589,24 @@ function ComponentProps({ component }: { component: import('../../types').Compon
             />
           </div>
         </>
+      )}
+
+      {/* Table Properties */}
+      {component.type === 'Table' && (
+        <TableEditor
+          columns={(component.props.columns as string[]) || ['Column 1', 'Column 2']}
+          rows={(component.props.rows as string[][]) || []}
+          onChange={(columns, rows) => componentStore.updateProps(component.id, { columns, rows })}
+        />
+      )}
+
+      {/* Breadcrumb Properties */}
+      {component.type === 'Breadcrumb' && (
+        <BreadcrumbEditor
+          items={(component.props.items as any[]) || []}
+          separator={(component.props.separator as string) || '/'}
+          onChange={(items, separator) => componentStore.updateProps(component.id, { items, separator })}
+        />
       )}
 
       {/* Tabs Properties */}
@@ -719,6 +761,142 @@ function ComponentProps({ component }: { component: import('../../types').Compon
   );
 }
 
+
+// Table Editor
+function TableEditor({
+  columns, rows, onChange,
+}: {
+  columns: string[];
+  rows: string[][];
+  onChange: (columns: string[], rows: string[][]) => void;
+}) {
+  const addColumn = () => {
+    const newCols = [...columns, `Col ${columns.length + 1}`];
+    const newRows = rows.map(r => [...r, '']);
+    onChange(newCols, newRows);
+  };
+  const removeColumn = (ci: number) => {
+    if (columns.length <= 1) return;
+    const newCols = columns.filter((_, i) => i !== ci);
+    const newRows = rows.map(r => r.filter((_, i) => i !== ci));
+    onChange(newCols, newRows);
+  };
+  const updateColumn = (ci: number, val: string) => {
+    const newCols = [...columns];
+    newCols[ci] = val;
+    onChange(newCols, rows);
+  };
+  const addRow = () => {
+    onChange(columns, [...rows, columns.map(() => '')]);
+  };
+  const removeRow = (ri: number) => {
+    onChange(columns, rows.filter((_, i) => i !== ri));
+  };
+  const updateCell = (ri: number, ci: number, val: string) => {
+    const newRows = rows.map((r, i) => i === ri ? r.map((c, j) => j === ci ? val : c) : r);
+    onChange(columns, newRows);
+  };
+
+  const inputCls = 'px-1 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none w-full min-w-0';
+
+  return (
+    <div className="space-y-2">
+      {/* Column headers */}
+      <div className="flex items-center gap-1 mb-0.5">
+        <span className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Columns</span>
+        <button onClick={addColumn} className="text-[10px] px-1.5 py-0.5 bg-primary/10 hover:bg-primary/20 text-primary rounded">+ Col</button>
+      </div>
+      <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr) 20px` }}>
+        {columns.map((col, ci) => (
+          <input key={ci} value={col} onChange={e => updateColumn(ci, e.target.value)}
+            className={inputCls + ' font-semibold'} placeholder={`Col ${ci + 1}`} />
+        ))}
+        <div />
+      </div>
+
+      {/* Rows */}
+      <div className="flex items-center gap-1">
+        <span className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Rows</span>
+        <button onClick={addRow} className="text-[10px] px-1.5 py-0.5 bg-primary/10 hover:bg-primary/20 text-primary rounded">+ Row</button>
+      </div>
+      <div className="space-y-1">
+        {rows.map((row, ri) => (
+          <div key={ri} className="grid gap-1 items-center" style={{ gridTemplateColumns: `repeat(${columns.length}, 1fr) 20px` }}>
+            {columns.map((_, ci) => (
+              <input key={ci} value={row[ci] ?? ''} onChange={e => updateCell(ri, ci, e.target.value)}
+                className={inputCls} placeholder="—" />
+            ))}
+            <button onClick={() => removeRow(ri)} className="flex items-center justify-center text-muted-foreground hover:text-destructive">
+              <Trash2 className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+      </div>
+      {rows.length === 0 && (
+        <p className="text-[10px] text-muted-foreground text-center py-1">No rows — click + Row</p>
+      )}
+    </div>
+  );
+}
+
+// Breadcrumb Editor
+function BreadcrumbEditor({
+  items, separator, onChange,
+}: {
+  items: any[];
+  separator: string;
+  onChange: (items: any[], separator: string) => void;
+}) {
+  const updateItem = (i: number, patch: object) => {
+    const next = items.map((item, idx) => idx === i ? { ...item, ...patch } : item);
+    onChange(next, separator);
+  };
+  const addItem = () => {
+    onChange([...items, { label: 'Item', icon: '' }], separator);
+  };
+  const removeItem = (i: number) => {
+    onChange(items.filter((_, idx) => idx !== i), separator);
+  };
+
+  const inputCls = 'px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none';
+
+  return (
+    <div className="space-y-2">
+      {/* Separator */}
+      <div className="flex items-center gap-2">
+        <label className="text-[9px] text-muted-foreground uppercase tracking-wide w-16">Separator</label>
+        <input value={separator} onChange={e => onChange(items, e.target.value)}
+          className={inputCls + ' w-16 font-mono'} placeholder="/" />
+        <GlyphPicker onInsert={(g) => onChange(items, g)} />
+      </div>
+
+      {/* Items */}
+      <div className="flex items-center gap-1">
+        <span className="text-[9px] text-muted-foreground uppercase tracking-wide flex-1">Items</span>
+        <button onClick={addItem} className="text-[10px] px-1.5 py-0.5 bg-primary/10 hover:bg-primary/20 text-primary rounded">+ Item</button>
+      </div>
+      <div className="space-y-1">
+        {items.map((item: any, i: number) => {
+          const d = typeof item === 'string' ? { label: item, icon: '' } : item;
+          return (
+            <div key={i} className="flex items-center gap-1">
+              {/* Icon */}
+              <input value={d.icon || ''} onChange={e => updateItem(i, { icon: e.target.value })}
+                className={inputCls + ' w-8 text-center font-mono'} placeholder="⌂" />
+              <GlyphPicker onInsert={(g) => updateItem(i, { icon: g })} />
+              {/* Label */}
+              <input value={d.label || ''} onChange={e => updateItem(i, { label: e.target.value })}
+                className={inputCls + ' flex-1 min-w-0'} placeholder="Label" />
+              <button onClick={() => removeItem(i)} className="text-muted-foreground hover:text-destructive flex-shrink-0">
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 // Tree Items Editor Component
 function TreeItemsEditor({ items, onChange, level }: { items: any[]; onChange: (items: any[]) => void; level: number }) {

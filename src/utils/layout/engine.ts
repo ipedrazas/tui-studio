@@ -93,6 +93,12 @@ export class LayoutEngine {
       }
     }
 
+    // Leaf components always use their intrinsic height unless explicitly overridden
+    const leafTypes = ['Button', 'TextInput', 'Checkbox', 'Radio', 'Toggle', 'Select', 'Badge', 'Label', 'Spinner', 'ProgressBar', 'Text'];
+    if (leafTypes.includes(node.type) && typeof node.props.height !== 'number') {
+      height = this.calculateAutoHeight(node);
+    }
+
     // Apply margin
     const margin = typeof node.layout.margin === 'number' ? node.layout.margin : 0;
     const contentX = x + margin;
@@ -529,6 +535,15 @@ export class LayoutEngine {
       case 'Button':
       case 'TextInput':
         // 1 line of text + border (top + bottom) if enabled
+        return node.style.border ? 3 : 1;
+      case 'Checkbox':
+      case 'Radio':
+      case 'Toggle':
+      case 'Select':
+      case 'Badge':
+      case 'Label':
+      case 'Spinner':
+      case 'ProgressBar':
         return node.style.border ? 3 : 1;
       case 'Text':
         const content = (node.props.content as string) || '';

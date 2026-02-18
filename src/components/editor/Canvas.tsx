@@ -1160,7 +1160,7 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRende
           boxSizing: 'border-box',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: ['Checkbox', 'Radio'].includes(node.type) ? 'flex-start' : 'center',
           padding: node.layout.padding !== undefined
             ? `${node.layout.padding * cellHeight * zoom}px ${node.layout.padding * cellWidth * zoom}px`
             : undefined,

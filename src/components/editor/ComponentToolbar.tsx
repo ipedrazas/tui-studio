@@ -322,20 +322,6 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
     };
   }, [isDragging]);
 
-  const handleComponentClick = (type: ComponentType, groupId: string) => {
-    setActiveGroup(groupId);
-    setOpenDropdown(null);
-
-    // Start drag operation
-    dragStore.startDrag({
-      type: 'new-component',
-      componentType: type,
-    });
-
-    // Show visual feedback that component is selected
-    setTimeout(() => setActiveGroup(null), 500);
-  };
-
   const handleGroupClick = (groupId: string) => {
     if (openDropdown === groupId) {
       setOpenDropdown(null);

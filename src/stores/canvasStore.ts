@@ -53,7 +53,7 @@ export const useCanvasStore = create<CanvasState>((set) => ({
 
   // Set size mode
   setSizeMode: (mode) => {
-    set((state) => {
+    set(() => {
       if (mode === 'default') {
         return { sizeMode: mode, width: 80, height: 25 };
       } else if (mode === 'responsive') {

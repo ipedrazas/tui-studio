@@ -37,6 +37,27 @@ function App() {
         return;
       }
 
+      // Save (Ctrl/Cmd+S)
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        window.dispatchEvent(new Event('command-save'));
+        return;
+      }
+
+      // Export (Ctrl/Cmd+E)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
+        e.preventDefault();
+        window.dispatchEvent(new Event('command-export'));
+        return;
+      }
+
+      // Settings (Ctrl/Cmd+K)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        window.dispatchEvent(new Event('command-settings'));
+        return;
+      }
+
       // Delete selected component (Backspace or Delete)
       if ((e.key === 'Backspace' || e.key === 'Delete') && !isTyping && !commandPaletteOpen) {
         const selectedIds = Array.from(selectionStore.selectedIds);
@@ -54,11 +75,77 @@ function App() {
           selectionStore.clearSelection();
         }
       }
+
+      // Component creation hotkeys (only when not typing and palette closed)
+      if (!isTyping && !commandPaletteOpen && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+        const hotkeyMap: Record<string, ComponentType> = {
+          'b': 'Button',
+          'r': 'Box',
+          'k': 'Checkbox',
+          'a': 'Radio',
+          's': 'Select',
+          'i': 'TextInput',
+          'o': 'Toggle',
+          'p': 'ProgressBar',
+          'n': 'Spinner',
+          'y': 'Text',
+          't': 'Tabs',
+          'l': 'List',
+          'e': 'Tree',
+          'm': 'Menu',
+          'j': 'Spacer',
+        };
+
+        const componentType = hotkeyMap[e.key.toLowerCase()];
+        if (componentType) {
+          e.preventDefault();
+          handleAddComponent(componentType);
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [commandPaletteOpen, componentStore, selectionStore]);
+
+  // Listen for command palette open event from toolbar button
+  useEffect(() => {
+    const handleOpenCommandPalette = () => {
+      setCommandPaletteOpen(true);
+    };
+    window.addEventListener('open-command-palette', handleOpenCommandPalette);
+    return () => window.removeEventListener('open-command-palette', handleOpenCommandPalette);
+  }, []);
+
+  // Listen for command events
+  useEffect(() => {
+    const handleSave = () => {
+      // TODO: Implement save functionality
+    };
+
+    const handleExport = () => {
+      // TODO: Open export modal (same as Export button in toolbar)
+      // Dispatch event to open export modal
+      const exportButton = document.querySelector('[title="Export"]') as HTMLButtonElement;
+      if (exportButton) {
+        exportButton.click();
+      }
+    };
+
+    const handleSettings = () => {
+      // TODO: Implement settings modal
+    };
+
+    window.addEventListener('command-save', handleSave);
+    window.addEventListener('command-export', handleExport);
+    window.addEventListener('command-settings', handleSettings);
+
+    return () => {
+      window.removeEventListener('command-save', handleSave);
+      window.removeEventListener('command-export', handleExport);
+      window.removeEventListener('command-settings', handleSettings);
+    };
+  }, []);
 
   // Handle adding component from command palette
   const handleAddComponent = (type: ComponentType) => {

@@ -1,7 +1,7 @@
 // Flexbox layout calculator
 
 import type { ComponentNode } from '../../types';
-import type { LayoutBox, ComputedLayout, FlexItem } from './types';
+import type { ComputedLayout, FlexItem } from './types';
 
 interface FlexLine {
   items: FlexItem[];
@@ -28,8 +28,6 @@ export function calculateFlexboxLayout(
 
   const isRow = direction === 'row';
   const mainSize = isRow ? contentWidth : contentHeight;
-  const crossSize = isRow ? contentHeight : contentWidth;
-
   // Convert children to flex items
   const flexItems: FlexItem[] = container.children.map(child => ({
     id: child.id,
@@ -54,7 +52,7 @@ export function calculateFlexboxLayout(
     const sizes = resolveFlexItemSizes(line.items, mainSize, gap, isRow);
 
     // Calculate cross size for this line
-    const lineCrossSize = line.items.reduce((max, item, i) => {
+    const lineCrossSize = line.items.reduce((max, item) => {
       const size = isRow ? resolveHeight(item) : resolveWidth(item);
       return Math.max(max, size);
     }, 0);

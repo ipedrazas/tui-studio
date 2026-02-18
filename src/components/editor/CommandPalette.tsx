@@ -1,8 +1,8 @@
 // Command palette for quick access to commands and components
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, FileDown, Save, Palette, Package } from 'lucide-react';
-import { useComponentStore, useSelectionStore, useThemeStore } from '../../stores';
+import { Search, FileDown, Save, Palette, Package, Settings } from 'lucide-react';
+import { useThemeStore } from '../../stores';
 import { COMPONENT_LIBRARY } from '../../constants/components';
 import { THEME_NAMES } from '../../stores/themeStore';
 import type { ComponentType } from '../../types';
@@ -20,6 +20,7 @@ interface Command {
   icon: React.ComponentType<{ size?: number; className?: string }>;
   action: () => void;
   category: 'action' | 'component' | 'theme';
+  shortcut?: string;
 }
 
 export function CommandPalette({ isOpen, onClose, onAddComponent }: CommandPaletteProps) {
@@ -30,46 +31,7 @@ export function CommandPalette({ isOpen, onClose, onAddComponent }: CommandPalet
 
   // Build command list
   const commands: Command[] = [
-    // Actions
-    {
-      id: 'export',
-      label: 'Export',
-      description: 'Export design to code',
-      icon: FileDown,
-      action: () => {
-        // TODO: Open export modal
-        console.log('Export');
-        onClose();
-      },
-      category: 'action',
-    },
-    {
-      id: 'save',
-      label: 'Save',
-      description: 'Save design to file',
-      icon: Save,
-      action: () => {
-        // TODO: Implement save
-        console.log('Save');
-        onClose();
-      },
-      category: 'action',
-    },
-
-    // Themes
-    ...THEME_NAMES.map((themeName) => ({
-      id: `theme-${themeName}`,
-      label: `Theme: ${themeName}`,
-      description: `Switch to ${themeName} theme`,
-      icon: Palette,
-      action: () => {
-        themeStore.setTheme(themeName as any);
-        onClose();
-      },
-      category: 'theme' as const,
-    })),
-
-    // Components
+    // Components first (search for components)
     ...Object.entries(COMPONENT_LIBRARY).map(([type, def]) => ({
       id: `component-${type}`,
       label: def.name,
@@ -80,6 +42,57 @@ export function CommandPalette({ isOpen, onClose, onAddComponent }: CommandPalet
         onClose();
       },
       category: 'component' as const,
+    })),
+
+    // Actions (after divider in UI)
+    {
+      id: 'save',
+      label: 'Save',
+      description: 'Save design to file',
+      icon: Save,
+      action: () => {
+        window.dispatchEvent(new Event('command-save'));
+        onClose();
+      },
+      category: 'action',
+      shortcut: 'Ctrl+S',
+    },
+    {
+      id: 'export',
+      label: 'Export',
+      description: 'Export design to code',
+      icon: FileDown,
+      action: () => {
+        window.dispatchEvent(new Event('command-export'));
+        onClose();
+      },
+      category: 'action',
+      shortcut: 'Ctrl+E',
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      description: 'Open settings',
+      icon: Settings,
+      action: () => {
+        window.dispatchEvent(new Event('command-settings'));
+        onClose();
+      },
+      category: 'action',
+      shortcut: 'Ctrl+K',
+    },
+
+    // Themes
+    ...THEME_NAMES.map((theme) => ({
+      id: `theme-${theme.value}`,
+      label: theme.label,
+      description: `Switch to ${theme.label} theme`,
+      icon: Palette,
+      action: () => {
+        themeStore.setTheme(theme.value as any);
+        onClose();
+      },
+      category: 'theme' as const,
     })),
   ];
 
@@ -166,31 +179,66 @@ export function CommandPalette({ isOpen, onClose, onAddComponent }: CommandPalet
               No results found
             </div>
           ) : (
-            filteredCommands.map((cmd, index) => {
-              const Icon = cmd.icon;
-              return (
-                <button
-                  key={cmd.id}
-                  onClick={() => cmd.action()}
-                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left ${
-                    index === selectedIndex ? 'bg-accent' : ''
-                  }`}
-                >
-                  <Icon size={18} className="text-muted-foreground flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium">{cmd.label}</div>
-                    {cmd.description && (
-                      <div className="text-xs text-muted-foreground truncate">
-                        {cmd.description}
-                      </div>
-                    )}
+            (() => {
+              // Group commands by category
+              const grouped = filteredCommands.reduce((acc, cmd) => {
+                if (!acc[cmd.category]) acc[cmd.category] = [];
+                acc[cmd.category].push(cmd);
+                return acc;
+              }, {} as Record<string, Command[]>);
+
+              const categoryOrder: Array<'component' | 'action' | 'theme'> = ['component', 'action', 'theme'];
+              const categoryLabels = {
+                component: 'Components',
+                action: 'Actions',
+                theme: 'Themes',
+              };
+
+              let globalIndex = 0;
+
+              return categoryOrder.map((cat) => {
+                const cmds = grouped[cat];
+                if (!cmds || cmds.length === 0) return null;
+
+                return (
+                  <div key={cat}>
+                    {/* Section Header */}
+                    <div className="px-4 py-2 text-xs font-semibold text-muted-foreground bg-muted/30 border-t border-border">
+                      {categoryLabels[cat]}
+                    </div>
+                    {/* Commands in this category */}
+                    {cmds.map((cmd) => {
+                      const Icon = cmd.icon;
+                      const index = globalIndex++;
+                      return (
+                        <button
+                          key={cmd.id}
+                          onClick={() => cmd.action()}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-accent transition-colors text-left ${
+                            index === selectedIndex ? 'bg-accent' : ''
+                          }`}
+                        >
+                          <Icon size={18} className="text-muted-foreground flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium">{cmd.label}</div>
+                            {cmd.description && (
+                              <div className="text-xs text-muted-foreground truncate">
+                                {cmd.description}
+                              </div>
+                            )}
+                          </div>
+                          {cmd.shortcut && (
+                            <kbd className="px-2 py-1 text-[10px] font-mono bg-muted border border-border rounded">
+                              {cmd.shortcut}
+                            </kbd>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div className="text-xs text-muted-foreground capitalize">
-                    {cmd.category}
-                  </div>
-                </button>
-              );
-            })
+                );
+              });
+            })()
           )}
         </div>
 

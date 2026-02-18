@@ -114,7 +114,6 @@ export function getComponentIcon(type: ComponentType) {
 
 export function ComponentTree() {
   const componentStore = useComponentStore();
-  const selectionStore = useSelectionStore();
 
   if (!componentStore.root) {
     return (

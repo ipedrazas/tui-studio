@@ -68,19 +68,12 @@ export class LayoutEngine {
       width = node.props.width;
     } else if (node.props.width === 'auto') {
       width = this.calculateAutoWidth(node);
-      console.log(`[Layout] Auto width for ${node.type} "${node.name}":`, width, 'props.width:', node.props.width);
     }
 
     if (typeof node.props.height === 'number') {
       height = node.props.height;
-      if (node.type === 'Box') {
-        console.log(`[Layout] ${node.type} "${node.name}" has explicit height:`, height);
-      }
     } else if (node.props.height === 'auto') {
       height = this.calculateAutoHeight(node);
-      if (node.type === 'Box') {
-        console.log(`[Layout] ${node.type} "${node.name}" using auto height:`, height);
-      }
     }
 
     // Tabs always auto-sizes unless an explicit numeric dimension is set
@@ -515,15 +508,7 @@ export class LayoutEngine {
           maxHeight = Math.max(maxHeight, childHeight);
         });
 
-        const calculatedHeight = maxHeight + (padding * 2) + border;
-        console.log(`[Layout] Auto height for ${node.type} "${node.name}" (row):`, {
-          maxChildHeight: maxHeight,
-          padding: padding * 2,
-          border,
-          total: calculatedHeight,
-          childCount: node.children.length
-        });
-        return calculatedHeight;
+        return maxHeight + (padding * 2) + border;
       }
 
       // For other layouts, use a reasonable default

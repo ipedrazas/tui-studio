@@ -59,21 +59,17 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
 
   // Add component
   addComponent: (parentId, componentData, index) => {
-    console.log('➕ addComponent called:', { parentId, type: componentData.type, name: componentData.name });
     const { root } = get();
     if (!root) {
-      console.log('❌ No root found');
       return '';
     }
 
     // Clone tree FIRST to create new references
     const newRoot = cloneNode(root);
-    console.log('✅ Tree cloned, old root ID:', root.id, 'new root ID:', newRoot.id);
 
     // Find parent in the NEW tree
     const parent = findNodeById(newRoot, parentId);
     if (!parent) {
-      console.log('❌ Parent not found:', parentId);
       return '';
     }
 
@@ -87,11 +83,9 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
     // If parent is a container and has explicit height/width, change to auto so it fits children
     if (['Box', 'Flexbox', 'Grid', 'Stack'].includes(parent.type)) {
       if (typeof parent.props.height === 'number') {
-        console.log(`📏 Auto-sizing: Changing ${parent.type} "${parent.name}" height from ${parent.props.height} to 'auto'`);
         parent.props.height = 'auto';
       }
       if (typeof parent.props.width === 'number' && parent.layout.direction !== 'column') {
-        console.log(`📏 Auto-sizing: Changing ${parent.type} "${parent.name}" width from ${parent.props.width} to 'auto'`);
         parent.props.width = 'auto';
       }
     }
@@ -103,15 +97,10 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
       parent.children.push(newComponent);
     }
 
-    console.log('✅ Component added with ID:', id, 'Parent now has', parent.children.length, 'children');
-    console.log('🔄 Calling set() with new root');
-
     set({
       root: newRoot,
       components: flattenTree(newRoot),
     });
-
-    console.log('✅ Store updated, new root reference:', newRoot === root ? 'SAME (BAD!)' : 'DIFFERENT (GOOD!)');
 
     get().saveHistory();
     return id;
@@ -239,7 +228,6 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
 
   // Update props
   updateProps: (id, props) => {
-    console.log('[Store] updateProps called:', { id, props });
     const { root } = get();
     if (!root) return;
 
@@ -248,17 +236,10 @@ export const useComponentStore = create<ComponentState>((set, get) => ({
 
     // Find component in the NEW tree
     const component = findNodeById(newRoot, id);
-    if (!component) {
-      console.log('[Store] Component not found:', id);
-      return;
-    }
-
-    console.log('[Store] Before update:', component.props);
+    if (!component) return;
 
     // Mutate the NEW tree's component
     component.props = { ...component.props, ...props };
-
-    console.log('[Store] After update:', component.props);
 
     set({
       root: newRoot,

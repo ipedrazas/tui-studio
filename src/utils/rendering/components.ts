@@ -4,7 +4,7 @@ import type { ComponentNode } from '../../types';
 import { CharCanvas } from './canvas';
 import { renderBox, getContentArea, BORDER_STYLES } from './borders';
 import { wrapText, alignText, padText, truncateText } from './text';
-import { wrapWithAnsi, generateAnsiCodes, ANSI_RESET } from './ansi';
+import { generateAnsiCodes } from './ansi';
 
 /**
  * Render a component to a character canvas

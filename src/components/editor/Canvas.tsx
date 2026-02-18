@@ -1,6 +1,6 @@
 // Main canvas for displaying the TUI design
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, memo } from 'react';
 import { useCanvasStore, useComponentStore, useSelectionStore } from '../../stores';
 import { layoutEngine } from '../../utils/layout';
 import { dragStore } from '../../hooks/useDragAndDrop';
@@ -27,15 +27,12 @@ function findComponentTheme(node: ComponentNode, componentStore: any): string {
 }
 
 export function Canvas() {
-  console.log('🎨 Canvas component mounted/rendering');
-
   // Subscribe to ENTIRE store to avoid stale state
   const componentStore = useComponentStore();
   const canvasStore = useCanvasStore();
   const selectionStore = useSelectionStore();
 
   const { root } = componentStore;
-  console.log('📦 Current root:', root ? `ID: ${root.id}, Children: ${root.children.length}` : 'null');
 
   const [isDragOver, setIsDragOver] = useState(false);
   const [offCanvasWarning, setOffCanvasWarning] = useState<string | null>(null);
@@ -88,7 +85,7 @@ export function Canvas() {
         const allLayouts = layoutEngine.getAllLayouts();
 
         let hasOffCanvas = false;
-        allLayouts.forEach((layout, nodeId) => {
+        allLayouts.forEach((layout) => {
           if (layout.x + layout.width > cols || layout.y + layout.height > rows) {
             hasOffCanvas = true;
           }
@@ -165,9 +162,7 @@ export function Canvas() {
 
   // Calculate layout SYNCHRONOUSLY during render so ComponentRenderer has layout data
   // This must happen BEFORE ComponentRenderer tries to access layout
-  console.log('⚡ Calculating layout for root:', root ? `${root.id} with ${root.children.length} children` : 'null');
   layoutEngine.calculateLayout(root, canvasStore.width, canvasStore.height);
-  console.log('✅ Layout calculation complete');
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -195,14 +190,6 @@ export function Canvas() {
       // Convert pixel position to character coordinates
       const charX = Math.floor(mouseX / (cellWidth * canvasStore.zoom));
       const charY = Math.floor(mouseY / (cellHeight * canvasStore.zoom));
-
-      console.log('📍 Repositioning component:', {
-        componentId: dragData.componentId,
-        mouseX,
-        mouseY,
-        charX,
-        charY
-      });
 
       // Update component position
       componentStore.updateLayout(dragData.componentId, { x: charX, y: charY });
@@ -378,7 +365,7 @@ interface ComponentRendererProps {
   zoom: number;
 }
 
-function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRendererProps) {
+const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRendererProps) {
   // Subscribe to entire store to avoid stale state
   const selectionStore = useSelectionStore();
   const componentStore = useComponentStore();
@@ -412,88 +399,96 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRende
 
   if (!layout || node.hidden) return null;
 
-  const getBorderChars = (style: string) => {
-    switch (style) {
-      case 'single':
-        return { tl: '┌', tr: '┐', bl: '└', br: '┘', h: '─', v: '│' };
-      case 'double':
-        return { tl: '╔', tr: '╗', bl: '╚', br: '╝', h: '═', v: '║' };
-      case 'rounded':
-        return { tl: '╭', tr: '╮', bl: '╰', br: '╯', h: '─', v: '│' };
-      case 'bold':
-        return { tl: '┏', tr: '┓', bl: '┗', br: '┛', h: '━', v: '┃' };
-      default:
-        return { tl: '+', tr: '+', bl: '+', br: '+', h: '-', v: '|' };
-    }
-  };
+  // Render component content as JSX
+  const renderComponent = (): React.ReactNode => {
+    const colorMap: Record<string, string> = {
+      black: 'text-black', red: 'text-red-500', green: 'text-green-500',
+      yellow: 'text-yellow-500', blue: 'text-blue-500', magenta: 'text-pink-500',
+      cyan: 'text-cyan-500', white: 'text-white', brightRed: 'text-red-400',
+      brightGreen: 'text-green-400', brightYellow: 'text-yellow-400',
+      brightBlue: 'text-blue-400', brightMagenta: 'text-pink-400', brightCyan: 'text-cyan-400',
+    };
+    const getColorClass = (color: string) => colorMap[color] || 'text-white';
 
-  // Helper to pad text to specified width
-  const padText = (text: string, width: number, align: 'left' | 'center' | 'right' = 'center'): string => {
-    if (text.length >= width) return text.slice(0, width);
-    const padding = width - text.length;
-    if (align === 'left') return text + ' '.repeat(padding);
-    if (align === 'right') return ' '.repeat(padding) + text;
-    const leftPad = Math.floor(padding / 2);
-    const rightPad = padding - leftPad;
-    return ' '.repeat(leftPad) + text + ' '.repeat(rightPad);
-  };
-
-  // Get plain text content for a component (for bordered rendering)
-  const getTextContent = (): string => {
     switch (node.type) {
       case 'Text':
-        return node.props.content as string || 'Text';
+        return <span className="font-mono">{(node.props.content as string) || 'Text'}</span>;
       case 'Button': {
         const label = node.props.label as string || 'Button';
         const iconLeft = (node.props.iconLeftEnabled && node.props.iconLeft) ? node.props.iconLeft as string : '';
         const iconRight = (node.props.iconRightEnabled && node.props.iconRight) ? node.props.iconRight as string : '';
         const number = node.props.number as number | undefined;
         const separated = node.props.separated as boolean;
-
+        let text: string;
         if (separated && iconLeft) {
           const leftSection = number !== undefined ? `${iconLeft} ${number}` : iconLeft;
-          return `${leftSection} │ ${label}${iconRight ? ` ${iconRight}` : ''}`;
+          text = `${leftSection} │ ${label}${iconRight ? ` ${iconRight}` : ''}`;
+        } else {
+          const left = iconLeft ? `${iconLeft} ` : '';
+          const right = iconRight ? ` ${iconRight}` : '';
+          text = `${left}${label}${right}`;
         }
-
-        const left = iconLeft ? `${iconLeft} ` : '';
-        const right = iconRight ? ` ${iconRight}` : '';
-        // No padding spaces - let the border padding handle it
-        return `${left}${label}${right}`;
+        return <span className="font-mono font-bold">{text}</span>;
       }
       case 'TextInput':
-        return `[${node.props.placeholder || '___________'}]`;
+        return <span className="font-mono">[{node.props.placeholder as string || '___________'}]</span>;
       case 'Select': {
         const value = (node.props.value as string) || '';
         const options = (node.props.options as string[]) || [];
         const displayText = value || (options.length > 0 ? options[0] : 'Select');
-        return `${displayText} ▼`;
+        return (
+          <span className="font-mono">
+            {displayText} <span className="text-muted-foreground">▼</span>
+          </span>
+        );
       }
       case 'ProgressBar': {
         const value = (node.props.value as number) || 0;
         const max = (node.props.max as number) || 100;
         const percentage = Math.floor((value / max) * 20);
-        return `[${'█'.repeat(percentage)}${'░'.repeat(20 - percentage)}] ${value}/${max}`;
+        return (
+          <span className="font-mono">
+            [{'█'.repeat(percentage)}{'░'.repeat(20 - percentage)}] {value}/{max}
+          </span>
+        );
       }
       case 'Checkbox': {
         const checkedIcon = (node.props.checkedIcon as string) || '✓';
         const uncheckedIcon = (node.props.uncheckedIcon as string) || ' ';
         const checked = node.props.checked as boolean;
         const label = (node.props.label as string) || 'Checkbox';
-        return `[${checked ? checkedIcon : uncheckedIcon}] ${label}`;
+        const iconColor = checked
+          ? getColorClass((node.style.checkedColor as string) || 'green')
+          : getColorClass((node.style.uncheckedColor as string) || 'white');
+        const icon = checked ? checkedIcon : uncheckedIcon;
+        return (
+          <span className="font-mono">
+            <span className={iconColor}>[{icon}]</span>
+            <span className={getColorClass((node.style.labelColor as string) || 'white')}> {label}</span>
+          </span>
+        );
       }
       case 'Radio': {
         const selectedIcon = (node.props.selectedIcon as string) || '●';
         const unselectedIcon = (node.props.unselectedIcon as string) || '○';
         const checked = node.props.checked as boolean;
         const label = (node.props.label as string) || 'Option';
-        return `(${checked ? selectedIcon : unselectedIcon}) ${label}`;
+        const iconColor = checked
+          ? getColorClass((node.style.selectedColor as string) || 'blue')
+          : getColorClass((node.style.unselectedColor as string) || 'white');
+        const icon = checked ? selectedIcon : unselectedIcon;
+        return (
+          <span className="font-mono">
+            <span className={iconColor}>({icon})</span>
+            <span className={getColorClass((node.style.labelColor as string) || 'white')}> {label}</span>
+          </span>
+        );
       }
       case 'Spinner':
-        return '⣾ Loading...';
+        return <span className="font-mono">⣾ Loading...</span>;
       case 'Tabs': {
         const tabs = (node.props.tabs as any[]) || [];
         const activeTab = (node.props.activeTab as number) || 0;
-
         const tabStrings = tabs.map((tab: any) => {
           const label = typeof tab === 'string' ? tab : tab.label || 'Tab';
           const icon = typeof tab === 'object' && tab.icon ? `${tab.icon} ` : '';
@@ -501,22 +496,21 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRende
           const hotkey = typeof tab === 'object' && tab.hotkey ? ` ${tab.hotkey}` : '';
           return `${icon}${label}${status}${hotkey}`;
         });
-
         const tabsGroupWidth = tabStrings.reduce((sum: number, t: string) => sum + t.length + 4, 0);
         const componentWidth = layout.width;
         const justify = (node.layout as any).justify || 'start';
-        let leftOffset = 1;
+        let leftOffset: number;
         if (justify === 'center') {
           leftOffset = Math.max(1, Math.floor((componentWidth - tabsGroupWidth) / 2));
         } else if (justify === 'end') {
           leftOffset = Math.max(1, componentWidth - tabsGroupWidth);
+        } else {
+          leftOffset = 1;
         }
         const rightOffset = Math.max(0, componentWidth - leftOffset - tabsGroupWidth);
-
         let topRow = ' '.repeat(leftOffset);
         let midRow = ' '.repeat(leftOffset);
         let botRow = '─'.repeat(leftOffset);
-
         tabStrings.forEach((text: string, i: number) => {
           const innerWidth = text.length + 2;
           topRow += `╭${'─'.repeat(innerWidth)}╮`;
@@ -526,77 +520,100 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRende
             : `┴${'─'.repeat(innerWidth)}┴`;
         });
         botRow += '─'.repeat(rightOffset);
-
-        return `${topRow}\n${midRow}\n${botRow}`;
+        return (
+          <div className="font-mono leading-none text-xs whitespace-pre">
+            <div>{topRow}</div>
+            <div>{midRow}</div>
+            <div>{botRow}</div>
+          </div>
+        );
       }
       case 'Menu': {
         const items = (node.props.items as any[]) || [];
         const selectedIndex = (node.props.selectedIndex as number) || 0;
         const isHorizontal = node.layout.type === 'flexbox' && node.layout.direction === 'row';
-
         if (isHorizontal) {
-          // Horizontal menu - items on one line with vertical separators
           const gap = typeof node.layout.gap === 'number' ? node.layout.gap : 0;
-          const gapStr = ' '.repeat(gap);
-          const parts: string[] = [];
-
-          items.forEach((item, i) => {
-            const itemData = typeof item === 'string' ? { label: item, icon: '', hotkey: '', separator: false } : item;
-            const icon = itemData.icon ? `${itemData.icon} ` : '';
-            const hotkey = itemData.hotkey ? ` ${itemData.hotkey}` : '';
-            parts.push(`${icon}${itemData.label}${hotkey}`);
-
-            if (i < items.length - 1) {
-              // Add gap + separator + gap pattern
-              if (itemData.separator) {
-                parts.push(`${gapStr}│${gapStr}`);
-              } else {
-                parts.push(gapStr);
-              }
-            }
-          });
-
-          return parts.join('');
+          const gapStr = '\u00A0'.repeat(gap);
+          return (
+            <div className="font-mono text-xs flex items-center whitespace-pre">
+              {items.map((item, i) => {
+                const itemData = typeof item === 'string' ? { label: item, icon: '', hotkey: '', separator: false } : item;
+                return (
+                  <span key={i}>
+                    {itemData.icon && `${itemData.icon} `}
+                    {itemData.label}
+                    {itemData.hotkey && <span className="text-muted-foreground">{` ${itemData.hotkey}`}</span>}
+                    {i < items.length - 1 && (
+                      itemData.separator
+                        ? <span className="text-muted-foreground">{gapStr}│{gapStr}</span>
+                        : <span>{gapStr}</span>
+                    )}
+                  </span>
+                );
+              })}
+            </div>
+          );
         } else {
-          // Vertical menu - items stacked with horizontal separators
-          const lines: string[] = [];
-
-          items.forEach((item, i) => {
-            const itemData = typeof item === 'string' ? { label: item, icon: '', hotkey: '', separator: false } : item;
-            const isSelected = i === selectedIndex;
-            const prefix = isSelected ? '▶ ' : '  ';
-            const icon = itemData.icon ? `${itemData.icon} ` : '';
-            const hotkey = itemData.hotkey ? `   ${itemData.hotkey}` : '';
-
-            lines.push(`${prefix}${icon}${itemData.label}${hotkey}`);
-
-            // Add horizontal separator line after this item if enabled
-            if (itemData.separator && i < items.length - 1) {
-              lines.push('──────────────────');
-            }
-          });
-
-          return lines.join('\n');
+          return (
+            <div className="font-mono text-xs">
+              {items.map((item, i) => {
+                const itemData = typeof item === 'string' ? { label: item, icon: '', hotkey: '', separator: false } : item;
+                const isSelected = i === selectedIndex;
+                return (
+                  <div key={i}>
+                    <div className={isSelected ? 'font-bold' : ''}>
+                      {isSelected ? '▶ ' : '  '}
+                      {itemData.icon && `${itemData.icon} `}
+                      {itemData.label}
+                      {itemData.hotkey && <span className="ml-auto float-right text-muted-foreground">{itemData.hotkey}</span>}
+                    </div>
+                    {itemData.separator && i < items.length - 1 && (
+                      <div className="text-muted-foreground">──────────────────</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
         }
       }
       case 'List': {
         const items = (node.props.items as any[]) || [];
-        return items.map((item, i) => {
-          const itemData = typeof item === 'string' ? { label: item, icon: '•', hotkey: '' } : item;
-          const icon = itemData.icon ? `${itemData.icon} ` : '';
-          const hotkey = itemData.hotkey ? `  ${itemData.hotkey}` : '';
-          return `${icon}${itemData.label}${hotkey}`;
-        }).join('\n');
+        const selectedIndex = (node.props.selectedIndex as number) || 0;
+        return (
+          <div className="font-mono text-xs">
+            {items.map((item, i) => {
+              const itemData = typeof item === 'string' ? { label: item, icon: '•', hotkey: '' } : item;
+              const isSelected = i === selectedIndex;
+              return (
+                <div key={i} className={isSelected ? 'bg-accent' : ''}>
+                  {itemData.icon && `${itemData.icon} `}
+                  {itemData.label}
+                  {itemData.hotkey && <span className="ml-2 text-muted-foreground text-[10px]">{itemData.hotkey}</span>}
+                </div>
+              );
+            })}
+          </div>
+        );
       }
       case 'Breadcrumb': {
         const items = (node.props.items as any[]) || [];
         const separator = (node.props.separator as string) || ' / ';
-        return items.map((item, i) => {
-          const itemData = typeof item === 'string' ? { label: item, icon: '' } : item;
-          const icon = itemData.icon ? `${itemData.icon} ` : '';
-          const sep = i < items.length - 1 ? separator : '';
-          return `${icon}${itemData.label}${sep}`;
-        }).join('');
+        return (
+          <div className="font-mono text-xs flex items-center">
+            {items.map((item, i) => {
+              const itemData = typeof item === 'string' ? { label: item, icon: '' } : item;
+              return (
+                <span key={i}>
+                  {itemData.icon && `${itemData.icon} `}
+                  {itemData.label}
+                  {i < items.length - 1 && <span className="text-muted-foreground">{separator}</span>}
+                </span>
+              );
+            })}
+          </div>
+        );
       }
       case 'Tree': {
         const items = (node.props.items as any[]) || [];
@@ -607,29 +624,31 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRende
           const children = itemData.children || [];
           if (children.length > 0) {
             const childPrefix = prefix + (isLast ? '   ' : '│  ');
-            children.forEach((child: any, i: number) => {
-              result += renderTreeItem(child, childPrefix, i === children.length - 1);
+            children.forEach((child: any, ci: number) => {
+              result += renderTreeItem(child, childPrefix, ci === children.length - 1);
             });
           }
           return result;
         };
-
-        let text = '┬\n';
+        let treeText = '┬\n';
         items.forEach((item: any, i: number) => {
-          text += renderTreeItem(item, '', i === items.length - 1);
+          treeText += renderTreeItem(item, '', i === items.length - 1);
         });
-        return text.trimEnd();
+        return (
+          <div className="font-mono text-xs whitespace-pre leading-tight">
+            {treeText.trimEnd()}
+          </div>
+        );
       }
-      // Container components (Box, Flexbox, Grid, Stack, Spacer, Screen)
       case 'Box':
       case 'Flexbox':
       case 'Grid':
       case 'Stack':
       case 'Spacer':
       case 'Screen':
-        return ''; // Containers should be empty - they hold children
+        return null;
       default:
-        return node.type;
+        return <span className="font-mono">{node.type}</span>;
     }
   };
 
@@ -681,330 +700,10 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRende
     };
   }, [resizing, cellWidth, cellHeight, zoom, node.id, componentStore]);
 
-  const renderContent = () => {
-    const text = getTextContent();
-
-    switch (node.type) {
-      case 'Button':
-        return <span className="font-bold">{text}</span>;
-      case 'Select': {
-        const value = (node.props.value as string) || '';
-        const options = (node.props.options as string[]) || [];
-        const displayText = value || (options.length > 0 ? options[0] : 'Select');
-        return (
-          <span className="font-mono">
-            {displayText} <span className="text-muted-foreground">▼</span>
-          </span>
-        );
-      }
-      case 'Menu': {
-        const items = (node.props.items as any[]) || [];
-        const selectedIndex = (node.props.selectedIndex as number) || 0;
-        const isHorizontal = node.layout.type === 'flexbox' && node.layout.direction === 'row';
-
-        if (isHorizontal) {
-          // Horizontal menu - items side by side with vertical separators
-          const gap = typeof node.layout.gap === 'number' ? node.layout.gap : 0;
-          const gapStr = '\u00A0'.repeat(gap); // Non-breaking spaces for HTML rendering
-
-          return (
-            <div className="font-mono text-xs flex items-center whitespace-pre">
-              {items.map((item, i) => {
-                const itemData = typeof item === 'string' ? { label: item, icon: '', hotkey: '', separator: false } : item;
-                return (
-                  <span key={i}>
-                    {itemData.icon && `${itemData.icon} `}
-                    {itemData.label}
-                    {itemData.hotkey && (
-                      <span className="text-muted-foreground">{` ${itemData.hotkey}`}</span>
-                    )}
-                    {i < items.length - 1 && (
-                      itemData.separator ? (
-                        <span className="text-muted-foreground">{gapStr}│{gapStr}</span>
-                      ) : (
-                        <span>{gapStr}</span>
-                      )
-                    )}
-                  </span>
-                );
-              })}
-            </div>
-          );
-        } else {
-          // Vertical menu - items stacked with horizontal separators
-          return (
-            <div className="font-mono text-xs">
-              {items.map((item, i) => {
-                const itemData = typeof item === 'string' ? { label: item, icon: '', hotkey: '', separator: false } : item;
-                const isSelected = i === selectedIndex;
-                return (
-                  <div key={i}>
-                    <div className={isSelected ? 'font-bold' : ''}>
-                      {isSelected ? '▶ ' : '  '}
-                      {itemData.icon && `${itemData.icon} `}
-                      {itemData.label}
-                      {itemData.hotkey && (
-                        <span className="ml-auto float-right text-muted-foreground">{itemData.hotkey}</span>
-                      )}
-                    </div>
-                    {itemData.separator && i < items.length - 1 && (
-                      <div className="text-muted-foreground">──────────────────</div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        }
-      }
-      case 'List': {
-        const items = (node.props.items as any[]) || [];
-        const selectedIndex = (node.props.selectedIndex as number) || 0;
-        return (
-          <div className="font-mono text-xs">
-            {items.map((item, i) => {
-              const itemData = typeof item === 'string' ? { label: item, icon: '•', hotkey: '' } : item;
-              const isSelected = i === selectedIndex;
-              return (
-                <div key={i} className={isSelected ? 'bg-accent' : ''}>
-                  {itemData.icon && `${itemData.icon} `}
-                  {itemData.label}
-                  {itemData.hotkey && (
-                    <span className="ml-2 text-muted-foreground text-[10px]">{itemData.hotkey}</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        );
-      }
-      case 'Breadcrumb': {
-        const items = (node.props.items as any[]) || [];
-        const separator = (node.props.separator as string) || ' / ';
-        return (
-          <div className="font-mono text-xs flex items-center">
-            {items.map((item, i) => {
-              const itemData = typeof item === 'string' ? { label: item, icon: '' } : item;
-              return (
-                <span key={i}>
-                  {itemData.icon && `${itemData.icon} `}
-                  {itemData.label}
-                  {i < items.length - 1 && <span className="text-muted-foreground">{separator}</span>}
-                </span>
-              );
-            })}
-          </div>
-        );
-      }
-      case 'Tree': {
-        const items = (node.props.items as any[]) || [];
-        const renderTreeItem = (item: any, prefix: string, isLast: boolean): string => {
-          const itemData = typeof item === 'string' ? { label: item, children: [] } : item;
-          const connector = isLast ? '╰╼' : '├╼';
-          let result = `${prefix}${connector} ${itemData.label}\n`;
-          const children = itemData.children || [];
-          if (children.length > 0) {
-            const childPrefix = prefix + (isLast ? '   ' : '│  ');
-            children.forEach((child: any, i: number) => {
-              result += renderTreeItem(child, childPrefix, i === children.length - 1);
-            });
-          }
-          return result;
-        };
-
-        let treeText = '┬\n';
-        items.forEach((item: any, i: number) => {
-          treeText += renderTreeItem(item, '', i === items.length - 1);
-        });
-
-        return (
-          <div className="font-mono text-xs whitespace-pre leading-tight">
-            {treeText.trimEnd()}
-          </div>
-        );
-      }
-      case 'Tabs': {
-        const tabs = (node.props.tabs as any[]) || [];
-        const activeTab = (node.props.activeTab as number) || 0;
-
-        const tabStrings = tabs.map((tab: any) => {
-          const label = typeof tab === 'string' ? tab : tab.label || 'Tab';
-          const icon = typeof tab === 'object' && tab.icon ? `${tab.icon} ` : '';
-          const status = typeof tab === 'object' && tab.status ? ' ●' : '';
-          const hotkey = typeof tab === 'object' && tab.hotkey ? ` ${tab.hotkey}` : '';
-          return `${icon}${label}${status}${hotkey}`;
-        });
-
-        // Total width occupied by all tab borders+content (no padding chars)
-        const tabsGroupWidth = tabStrings.reduce((sum: number, t: string) => sum + t.length + 4, 0);
-        const componentWidth = layout.width;
-
-        // Map justify → left offset of the tab group on the separator line
-        const justify = (node.layout as any).justify || 'start';
-        let leftOffset: number;
-        if (justify === 'center') {
-          leftOffset = Math.max(1, Math.floor((componentWidth - tabsGroupWidth) / 2));
-        } else if (justify === 'end') {
-          leftOffset = Math.max(1, componentWidth - tabsGroupWidth);
-        } else {
-          leftOffset = 1; // start / default
-        }
-        const rightOffset = Math.max(0, componentWidth - leftOffset - tabsGroupWidth);
-
-        // Row 1: offset spaces + tab top borders
-        let topRow = ' '.repeat(leftOffset);
-        // Row 2: offset spaces + tab content
-        let midRow = ' '.repeat(leftOffset);
-        // Row 3: full-width separator; active tab bottom is open (╯…╰), inactive close (┴…┴)
-        let botRow = '─'.repeat(leftOffset);
-
-        tabStrings.forEach((text: string, i: number) => {
-          const innerWidth = text.length + 2;
-          topRow += `╭${'─'.repeat(innerWidth)}╮`;
-          midRow += `│ ${text} │`;
-          botRow += i === activeTab
-            ? `╯${' '.repeat(innerWidth)}╰`
-            : `┴${'─'.repeat(innerWidth)}┴`;
-        });
-        botRow += '─'.repeat(rightOffset);
-
-        return (
-          <div className="font-mono leading-none text-xs whitespace-pre">
-            <div>{topRow}</div>
-            <div>{midRow}</div>
-            <div>{botRow}</div>
-          </div>
-        );
-      }
-      case 'Checkbox': {
-        const checkedIcon = (node.props.checkedIcon as string) || '✓';
-        const uncheckedIcon = (node.props.uncheckedIcon as string) || ' ';
-        const checked = node.props.checked as boolean;
-        const label = (node.props.label as string) || 'Checkbox';
-
-        // Get colors from style
-        const checkedColor = (node.style.checkedColor as string) || 'green';
-        const uncheckedColor = (node.style.uncheckedColor as string) || 'white';
-        const labelColor = (node.style.labelColor as string) || 'white';
-
-        // Map color names to Tailwind classes
-        const getColorClass = (color: string) => {
-          const colorMap: Record<string, string> = {
-            black: 'text-black',
-            red: 'text-red-500',
-            green: 'text-green-500',
-            yellow: 'text-yellow-500',
-            blue: 'text-blue-500',
-            magenta: 'text-pink-500',
-            cyan: 'text-cyan-500',
-            white: 'text-white',
-            brightRed: 'text-red-400',
-            brightGreen: 'text-green-400',
-            brightYellow: 'text-yellow-400',
-            brightBlue: 'text-blue-400',
-            brightMagenta: 'text-pink-400',
-            brightCyan: 'text-cyan-400',
-          };
-          return colorMap[color] || 'text-white';
-        };
-
-        const iconColor = checked ? getColorClass(checkedColor) : getColorClass(uncheckedColor);
-        const icon = checked ? checkedIcon : uncheckedIcon;
-
-        return (
-          <span className="font-mono">
-            <span className={iconColor}>[{icon}]</span>
-            <span className={getColorClass(labelColor)}> {label}</span>
-          </span>
-        );
-      }
-      case 'Radio': {
-        const selectedIcon = (node.props.selectedIcon as string) || '●';
-        const unselectedIcon = (node.props.unselectedIcon as string) || '○';
-        const checked = node.props.checked as boolean;
-        const label = (node.props.label as string) || 'Option';
-
-        // Get colors from style
-        const selectedColor = (node.style.selectedColor as string) || 'blue';
-        const unselectedColor = (node.style.unselectedColor as string) || 'white';
-        const labelColor = (node.style.labelColor as string) || 'white';
-
-        // Map color names to Tailwind classes
-        const getColorClass = (color: string) => {
-          const colorMap: Record<string, string> = {
-            black: 'text-black',
-            red: 'text-red-500',
-            green: 'text-green-500',
-            yellow: 'text-yellow-500',
-            blue: 'text-blue-500',
-            magenta: 'text-pink-500',
-            cyan: 'text-cyan-500',
-            white: 'text-white',
-            brightRed: 'text-red-400',
-            brightGreen: 'text-green-400',
-            brightYellow: 'text-yellow-400',
-            brightBlue: 'text-blue-400',
-            brightMagenta: 'text-pink-400',
-            brightCyan: 'text-cyan-400',
-          };
-          return colorMap[color] || 'text-white';
-        };
-
-        const iconColor = checked ? getColorClass(selectedColor) : getColorClass(unselectedColor);
-        const icon = checked ? selectedIcon : unselectedIcon;
-
-        return (
-          <span className="font-mono">
-            <span className={iconColor}>({icon})</span>
-            <span className={getColorClass(labelColor)}> {label}</span>
-          </span>
-        );
-      }
-      default:
-        return <span>{text}</span>;
-    }
-  };
-
   const hasBorder = node.style.border;
-  const borderStyle = node.style.borderStyle || 'single';
-  const chars = getBorderChars(borderStyle);
 
   const x = layout.x * cellWidth * zoom;
   const y = layout.y * cellHeight * zoom;
-
-  // Debug logging
-  if (node.type === 'Button') {
-    console.log(`[Canvas] Rendering Button:`, {
-      name: node.name,
-      nodeId: node.id,
-      layoutX: layout.x,
-      layoutY: layout.y,
-      pixelX: x,
-      pixelY: y,
-      layoutWidth: layout.width,
-      layoutHeight: layout.height,
-      cellWidth,
-      cellHeight,
-      zoom,
-      hasBorder,
-      isSelected,
-      hidden: node.hidden,
-    });
-  }
-
-  // Debug logging for root
-  if (node.type === 'Box' && node.id === 'root') {
-    console.log(`[Canvas] Rendering Root:`, {
-      nodeId: node.id,
-      layoutX: layout.x,
-      layoutY: layout.y,
-      pixelX: x,
-      pixelY: y,
-      layoutWidth: layout.width,
-      layoutHeight: layout.height,
-      childrenCount: node.children.length,
-    });
-  }
 
   const handleDragStart = (e: React.DragEvent) => {
     e.stopPropagation();
@@ -1171,11 +870,7 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRende
         }}
       >
         {/* Render content - border is handled by CSS */}
-        {['Tabs', 'Tree'].includes(node.type) ? renderContent() : (
-          <div className={node.type === 'Button' ? 'font-mono font-bold' : 'font-mono'}>
-            {getTextContent()}
-          </div>
-        )}
+        {renderComponent()}
 
         {/* Component label - only when selected, shows name + dimensions + position */}
         {isSelected && node.id !== 'root' && (
@@ -1276,4 +971,9 @@ function ComponentRenderer({ node, cellWidth, cellHeight, zoom }: ComponentRende
       ))}
     </>
   );
-}
+}, (prev, next) =>
+  prev.node === next.node &&
+  prev.cellWidth === next.cellWidth &&
+  prev.cellHeight === next.cellHeight &&
+  prev.zoom === next.zoom
+);

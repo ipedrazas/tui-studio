@@ -246,8 +246,11 @@ export function ComponentToolbar({ docked = false }: ComponentToolbarProps) {
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if typing in an input
+      // Don't trigger if typing in an input or if a modifier key is held
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) {
         return;
       }
 

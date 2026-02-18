@@ -6,6 +6,7 @@ import { useComponentStore, useCanvasStore, useThemeStore } from '../../stores';
 import { ExportModal } from '../export/ExportModal';
 import { THEME_NAMES } from '../../stores/themeStore';
 import { ComponentToolbar } from './ComponentToolbar';
+import { saveTuiFile, openTuiFile } from '../../utils/fileOps';
 
 // ── App menu (chevron dropdown next to logo) ─────────────────────────────────
 
@@ -46,8 +47,8 @@ function AppMenu() {
       {
         label: 'File',
         submenu: [
-          { label: 'Open',   shortcut: `${mod}O`, action: () => dispatch('command-open') },
-          { label: 'Save',   shortcut: `${mod}S`, action: () => dispatch('command-save') },
+          { label: 'Open',   shortcut: `${mod}O`, action: () => { close(); openTuiFile(); } },
+          { label: 'Save',   shortcut: `${mod}S`, action: () => { close(); saveTuiFile(); } },
           { label: 'Export', shortcut: `${mod}E`, action: () => dispatch('command-export') },
         ],
       },
@@ -270,7 +271,7 @@ export function Toolbar() {
       {/* Right - Actions */}
       <div className="flex items-center gap-2">
         <button
-          onClick={() => window.dispatchEvent(new Event('command-save'))}
+          onClick={() => saveTuiFile()}
           className="px-3 py-2 text-sm hover:bg-accent rounded-lg flex items-center gap-2 transition-colors"
           title="Save (Cmd+S)"
         >

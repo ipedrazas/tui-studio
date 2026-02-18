@@ -7,7 +7,8 @@ import { LeftSidebar } from './components/editor/LeftSidebar';
 import { Canvas } from './components/editor/Canvas';
 import { PropertyPanel } from './components/properties/PropertyPanel';
 import { CommandPalette } from './components/editor/CommandPalette';
-import { useComponentStore, useSelectionStore, useThemeStore } from './stores';
+import { useComponentStore, useSelectionStore } from './stores';
+import { saveTuiFile, openTuiFile } from './utils/fileOps';
 import { COMPONENT_LIBRARY } from './constants/components';
 import type { ComponentType } from './types';
 
@@ -118,14 +119,14 @@ function App() {
       // Open (Ctrl/Cmd+O)
       if ((e.metaKey || e.ctrlKey) && e.key === 'o') {
         e.preventDefault();
-        window.dispatchEvent(new Event('command-open'));
+        openTuiFile();
         return;
       }
 
       // Save (Ctrl/Cmd+S)
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
-        window.dispatchEvent(new Event('command-save'));
+        saveTuiFile();
         return;
       }
 
@@ -202,140 +203,17 @@ function App() {
     return () => window.removeEventListener('open-command-palette', handleOpenCommandPalette);
   }, []);
 
-  // Listen for command events
+  // Listen for command events (export only — save/open are called directly to preserve user gesture)
   useEffect(() => {
-    const handleSave = async () => {
-      const root = useComponentStore.getState().root;
-      if (!root) return;
-      const theme = useThemeStore.getState().currentTheme;
-      const data = {
-        version: '1',
-        meta: {
-          name: root.name,
-          theme,
-          savedAt: new Date().toISOString(),
-        },
-        tree: root,
-      };
-      const json = JSON.stringify(data, null, 2);
-      const suggestedName = `${root.name.toLowerCase().replace(/\s+/g, '-')}.tui`;
-
-      // Use native OS save dialog if available (Chrome / Edge)
-      if ('showSaveFilePicker' in window) {
-        try {
-          const fileHandle = await (window as any).showSaveFilePicker({
-            suggestedName,
-            types: [{ description: 'TUI Studio File', accept: { 'application/json': ['.tui'] } }],
-          });
-          const writable = await fileHandle.createWritable();
-          await writable.write(json);
-          await writable.close();
-          return;
-        } catch (err) {
-          if ((err as Error).name === 'AbortError') return; // user cancelled
-        }
-      }
-
-      // Fallback: trigger browser download
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = suggestedName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    };
-
     const handleExport = () => {
-      // TODO: Open export modal (same as Export button in toolbar)
-      // Dispatch event to open export modal
       const exportButton = document.querySelector('[title="Export"]') as HTMLButtonElement;
-      if (exportButton) {
-        exportButton.click();
-      }
+      if (exportButton) exportButton.click();
     };
 
-    const handleSettings = () => {
-      // TODO: Implement settings modal
-    };
-
-    const handleOpen = async () => {
-      const loadData = (text: string) => {
-        try {
-          const data = JSON.parse(text);
-          if (data.version === '1' && data.tree) {
-            useComponentStore.getState().setRoot(data.tree);
-            if (data.meta?.theme) {
-              useThemeStore.getState().setTheme(data.meta.theme);
-            }
-            useSelectionStore.getState().clearSelection();
-          }
-        } catch {
-          alert('Invalid .tui file');
-        }
-      };
-
-      if ('showOpenFilePicker' in window) {
-        try {
-          const [fileHandle] = await (window as any).showOpenFilePicker({
-            types: [{ description: 'TUI Studio File', accept: { 'application/json': ['.tui'] } }],
-            multiple: false,
-          });
-          const file = await fileHandle.getFile();
-          loadData(await file.text());
-        } catch (err) {
-          if ((err as Error).name !== 'AbortError') alert('Failed to open file');
-        }
-      } else {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.tui,application/json';
-        input.onchange = async () => {
-          const file = input.files?.[0];
-          if (file) loadData(await file.text());
-        };
-        input.click();
-      }
-    };
-
-    const handleCopy = () => {
-      const { selectedIds } = useSelectionStore.getState();
-      const store = useComponentStore.getState();
-      const copied = Array.from(selectedIds)
-        .map((id) => store.getComponent(id))
-        .filter((c): c is import('./types').ComponentNode => !!c && c.id !== 'root')
-        .map((c) => cloneNode(c));
-      if (copied.length > 0) componentClipboard = copied;
-    };
-
-    const handlePaste = () => {
-      if (componentClipboard.length === 0) return;
-      const root = useComponentStore.getState().root;
-      if (!root) return;
-      const newIds: string[] = [];
-      for (const original of componentClipboard) {
-        const id = pasteTree(cloneNode(original), root.id, useComponentStore.getState(), 2, 2);
-        if (id) newIds.push(id);
-      }
-      if (newIds.length === 1) useSelectionStore.getState().select(newIds[0]);
-    };
-
-    window.addEventListener('command-save', handleSave);
     window.addEventListener('command-export', handleExport);
-    window.addEventListener('command-settings', handleSettings);
-    window.addEventListener('command-open', handleOpen);
-    window.addEventListener('command-copy', handleCopy);
-    window.addEventListener('command-paste', handlePaste);
 
     return () => {
-      window.removeEventListener('command-save', handleSave);
       window.removeEventListener('command-export', handleExport);
-      window.removeEventListener('command-settings', handleSettings);
-      window.removeEventListener('command-open', handleOpen);
-      window.removeEventListener('command-copy', handleCopy);
-      window.removeEventListener('command-paste', handlePaste);
     };
   }, []);
 

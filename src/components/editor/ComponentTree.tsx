@@ -335,17 +335,19 @@ function TreeNode({ node, level }: { node: ComponentNode; level: number }) {
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={toggleVisibility}
-            className="p-1 hover:bg-secondary rounded"
-            title={node.hidden ? 'Show' : 'Hide'}
-          >
-            {node.hidden ? (
-              <EyeOff className="w-3 h-3" />
-            ) : (
-              <Eye className="w-3 h-3" />
-            )}
-          </button>
+          {node.id !== 'root' && (
+            <button
+              onClick={toggleVisibility}
+              className="p-1 hover:bg-secondary rounded"
+              title={node.hidden ? 'Show' : 'Hide'}
+            >
+              {node.hidden ? (
+                <EyeOff className="w-3 h-3" />
+              ) : (
+                <Eye className="w-3 h-3" />
+              )}
+            </button>
+          )}
           <button
             onClick={toggleLocked}
             className="p-1 hover:bg-secondary rounded"

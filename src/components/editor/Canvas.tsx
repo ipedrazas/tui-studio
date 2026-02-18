@@ -240,7 +240,7 @@ export function Canvas() {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => { if (root) selectionStore.select('root'); }}
+          onClick={() => selectionStore.clearSelection()}
         >
           {/* Grid */}
           {canvasStore.showGrid && (
@@ -729,7 +729,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
   }, [resizing, cellWidth, cellHeight, zoom, node.id, componentStore]);
 
   const hasBorder = node.style.border;
-  const borderColor = hasBorder ? (getColor(node.style.borderColor) || '#fff') : null;
+  const borderColor = hasBorder ? (getColor(node.style.borderColor) || activeTheme.white) : null;
   const showBorderTop    = node.style.borderTop    !== false;
   const showBorderRight  = node.style.borderRight  !== false;
   const showBorderBottom = node.style.borderBottom !== false;
@@ -904,7 +904,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
         className={`absolute transition-colors ${
           isDragging ? 'opacity-50 cursor-grabbing' : 'cursor-grab'
         } ${
-          isSelected
+          isSelected && node.id !== 'root'
             ? 'ring-2 ring-primary ring-offset-2'
             : hasOverflow
               ? 'ring-1 ring-red-500'
@@ -915,7 +915,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
           top: `${y}px`,
           width: `${layout.width * cellWidth * zoom}px`,
           height: `${layout.height * cellHeight * zoom}px`,
-          color: getColor(node.style.color),
+          color: getColor(node.style.color) || activeTheme.white,
           backgroundColor: getColor(node.style.backgroundColor),
           fontWeight: node.style.bold ? 'bold' : 'normal',
           fontStyle: node.style.italic ? 'italic' : 'normal',
@@ -935,7 +935,11 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
         }}
         onClick={(e) => {
           e.stopPropagation();
-          selectionStore.select(node.id);
+          if (node.id !== 'root') {
+            selectionStore.select(node.id);
+          } else {
+            selectionStore.clearSelection();
+          }
         }}
       >
         {/* Render content - border is handled by CSS */}

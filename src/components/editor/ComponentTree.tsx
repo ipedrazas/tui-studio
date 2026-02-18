@@ -333,7 +333,7 @@ function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level:
           isDragOver ? 'bg-primary/30 border-2 border-dashed border-primary' : ''
         } ${isDragging ? 'opacity-30' : ''}`}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
-        onClick={() => selectionStore.select(node.id)}
+        onClick={() => { if (node.id !== 'root') selectionStore.select(node.id); }}
       >
         {/* Expand/Collapse */}
         {hasChildren ? (

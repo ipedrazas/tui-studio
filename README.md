@@ -48,7 +48,7 @@ Open `http://localhost:5173`.
 | Paste | `Cmd/Ctrl+V` |
 | Delete | `Backspace` / `Delete` |
 | Undo | `Cmd/Ctrl+Z` |
-| Redo | `Cmd/Ctrl+Shift+Z` |
+| Redo | `Cmd/Ctrl+Shift+Z` / `Cmd/Ctrl+Y` |
 
 **Component hotkeys** (when not typing):
 

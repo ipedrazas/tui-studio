@@ -79,6 +79,20 @@ function App() {
                       target.tagName === 'TEXTAREA' ||
                       target.isContentEditable;
 
+      // Undo (Ctrl/Cmd+Z)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        componentStore.undo();
+        return;
+      }
+
+      // Redo (Ctrl/Cmd+Shift+Z or Ctrl+Y)
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        componentStore.redo();
+        return;
+      }
+
       // Command palette (Ctrl/Cmd+P)
       if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
         e.preventDefault();

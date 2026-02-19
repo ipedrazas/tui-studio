@@ -102,9 +102,9 @@ npm run lint     # ESLint
 npm run preview  # Preview production build
 ```
 
-## License
+## 📜 LOLcense
 
-MIT — see [LICENSE](LICENSE) for details.
+For {root} sake I'm a designer. Mostly all the code has been written by chatGPT and ad latere.
 
 ---
 

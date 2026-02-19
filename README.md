@@ -5,173 +5,103 @@
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-A Figma-like visual editor for designing and building Terminal User Interface applications. Design with drag-and-drop, see live preview, export to multiple TUI frameworks.
+A Figma-like visual editor for designing Terminal UI applications. Drag-and-drop components onto a live canvas, edit properties visually, and export to multiple TUI frameworks.
 
-<img width="800" alt="TUIStudio - TUI Designer" src="https://via.placeholder.com/800x450/1a1a1a/00ff00?text=TUIStudio+TUI+Designer" />
+## Features
 
-## ✨ Features (Planned)
+- **Visual Canvas** — Drag-and-drop components with live ANSI preview at configurable zoom levels
+- **20+ TUI Components** — Screen, Box, Button, TextInput, Checkbox, Radio, Select, Toggle, Text, Spinner, ProgressBar, Table, List, Tree, Menu, Tabs, Breadcrumb, Modal, Popover, Tooltip, Spacer
+- **Layout Engine** — Absolute, Flexbox, and Grid layout modes with full property control
+- **Color Themes** — Dracula, Nord, Solarized Dark/Light, Monokai, One Dark, Gruvbox, Tokyo Night, Catppuccin — all updating the canvas in real-time
+- **Layers Panel** — Hierarchical component tree with drag-to-reorder, visibility toggle, lock, and inline rename
+- **Property Panel** — Edit layout, style, and component-specific props for the selected component
+- **Undo / Redo** — Full history for all tree mutations
+- **Save / Load** — `.tui` JSON format via native OS file picker (Chrome/Edge) or browser download (Firefox/Safari)
+- **Multi-Framework Export** — Generate code for Ink, BubbleTea, Blessed, Textual, OpenTUI, Tview
+- **Command Palette** — `Cmd/Ctrl+P` for quick component creation and commands
+- **App Menu** — File, Edit, and Help menus accessible from the chevron next to the logo
 
-- 🎨 **Visual Editor** - Drag-and-drop components onto a terminal canvas
-- 👁️ **Live Preview** - See your TUI render in real-time as you design
-- 📦 **Component Library** - Reusable components with Figma-style instances and overrides
-- 🏗️ **Layer System** - Organize designs with pages, frames, and hierarchical layers
-- 💻 **Multi-Framework Export** - Generate code for OpenTUI, Ink, BubbleTea, Blessed, Textual
-- 📐 **Layout Engine** - Automatic Flexbox/Grid layout calculations
-- 🎯 **Templates** - Pre-built templates for common TUI patterns
-- ⌨️ **Keyboard Shortcuts** - Professional workflow with hotkeys
-
-## 🎯 Vision
-
-Enable developers to build beautiful Terminal UIs as easily as designing web UIs in Figma. Bridge the gap between design and implementation for CLI applications.
-
-## 🚀 Quick Start
-
-**Note**: Project is currently in planning phase. Implementation will begin soon.
-
-### Documentation
-
-- **[Overview](./TUI_DESIGNER_OVERVIEW.md)** - Start here for project overview
-- **[Implementation Plan](./TUI_DESIGNER_IMPLEMENTATION_PLAN.md)** - Detailed 16-week roadmap
-- **[Quick Start Guide](./TUI_DESIGNER_QUICKSTART.md)** - Setup and first steps
-- **[Code Examples](./TUI_DESIGNER_CODE_EXAMPLE.md)** - See generated code output
-- **[Layers & Components](./TUI_DESIGNER_LAYERS_AND_COMPONENTS.md)** - Figma-style features
-
-### Prerequisites
-
-- Node.js 18+
-- npm or pnpm
-
-### Installation (Coming Soon)
+## Quick Start
 
 ```bash
-# Clone repository
 git clone https://github.com/jalonsogo/tui-studio.git
-cd tuistudio
-
-# Install dependencies
+cd tui-studio
 npm install
-
-# Start development server
 npm run dev
 ```
 
-## 🏗️ Tech Stack
+Open `http://localhost:5173`.
 
-- **React 19** - UI framework
-- **TypeScript 5.8+** - Type safety
-- **Vite 7** - Build tool
-- **Zustand 5** - State management
-- **Tailwind CSS 4** - Styling
-- **Shadcn/ui** - UI components
-- **OpenTUI** - Terminal preview
-- **Monaco Editor** - Code editor
-- **react-dnd** - Drag and drop
+## Keyboard Shortcuts
 
-## 📦 Project Structure
+| Action | Shortcut |
+|--------|----------|
+| Command Palette | `Cmd/Ctrl+P` |
+| Save | `Cmd/Ctrl+S` |
+| Open | `Cmd/Ctrl+O` |
+| Export | `Cmd/Ctrl+E` |
+| Copy | `Cmd/Ctrl+C` |
+| Paste | `Cmd/Ctrl+V` |
+| Delete | `Backspace` / `Delete` |
+| Undo | `Cmd/Ctrl+Z` |
+| Redo | `Cmd/Ctrl+Shift+Z` |
 
+**Component hotkeys** (when not typing):
+
+| Key | Component | Key | Component |
+|-----|-----------|-----|-----------|
+| `b` | Button | `t` | Tabs |
+| `r` | Box | `l` | List |
+| `k` | Checkbox | `e` | Tree |
+| `a` | Radio | `m` | Menu |
+| `s` | Select | `i` | TextInput |
+| `o` | Toggle | `p` | ProgressBar |
+| `n` | Spinner | `y` | Text |
+| `j` | Spacer | | |
+
+## File Format
+
+Projects are saved as `.tui` files (JSON):
+
+```json
+{
+  "version": "1",
+  "meta": { "name": "My Screen", "theme": "dracula", "savedAt": "..." },
+  "tree": { ... }
+}
 ```
-tuistudio/
-├── docs/                          # Documentation
-│   ├── TUI_DESIGNER_OVERVIEW.md
-│   ├── TUI_DESIGNER_IMPLEMENTATION_PLAN.md
-│   └── ...
-├── src/
-│   ├── components/
-│   │   ├── editor/               # Main editor components
-│   │   ├── palette/              # Component palette
-│   │   ├── properties/           # Property panel
-│   │   ├── layers/               # Layer system
-│   │   └── preview/              # Live preview
-│   ├── stores/                   # Zustand stores
-│   ├── types/                    # TypeScript types
-│   ├── utils/
-│   │   ├── codeGen/             # Code generators
-│   │   └── layout/              # Layout engine
-│   └── hooks/                   # Custom hooks
-├── examples/                     # Example TUI designs
-├── templates/                    # Built-in templates
-└── package.json
+
+## Export Frameworks
+
+| Framework | Language |
+|-----------|----------|
+| [Ink](https://github.com/vadimdemedes/ink) | TypeScript / React |
+| [BubbleTea](https://github.com/charmbracelet/bubbletea) | Go |
+| [Blessed](https://github.com/chjj/blessed) | JavaScript |
+| [Textual](https://github.com/Textualize/textual) | Python |
+| [OpenTUI](https://opentui.js.org/) | TypeScript |
+| [Tview](https://github.com/rivo/tview) | Go |
+
+## Tech Stack
+
+- **React 19**, TypeScript 5.8, Vite 7
+- **Zustand 5** — state management
+- **Tailwind CSS** — editor UI styling
+- **Lucide React** — icons
+
+## Commands
+
+```bash
+npm run dev      # Start dev server
+npm run build    # TypeScript compile + production build
+npm run lint     # ESLint
+npm run preview  # Preview production build
 ```
 
-## 🎨 Supported TUI Frameworks
+## License
 
-Export your designs to:
-
-| Framework | Language | Status |
-|-----------|----------|--------|
-| [OpenTUI](https://opentui.js.org/) | TypeScript/React | Planned |
-| [Ink](https://github.com/vadimdemedes/ink) | TypeScript/React | Planned |
-| [BubbleTea](https://github.com/charmbracelet/bubbletea) | Go | Planned |
-| [Blessed](https://github.com/chjj/blessed) | JavaScript | Planned |
-| [Textual](https://github.com/Textualize/textual) | Python | Planned |
-| [Tview](https://github.com/rivo/tview) | Go | Future |
-
-## 📅 Roadmap
-
-### MVP (Weeks 1-12)
-- [ ] Core editor with drag-and-drop
-- [ ] Property editing
-- [ ] Layout engine
-- [ ] Live preview
-- [ ] Code generation (OpenTUI, Ink, BubbleTea)
-- [ ] 5+ templates
-- [ ] Project save/load
-
-### V1.1 (Weeks 13-16)
-- [ ] Figma-style layer system
-- [ ] Reusable component library
-- [ ] Component instances with overrides
-- [ ] Component variants
-- [ ] Library import/export
-
-### V2.0 (Future)
-- [ ] Cloud storage
-- [ ] Real-time collaboration
-- [ ] Component marketplace
-- [ ] Plugin system
-- [ ] AI layout suggestions
-
-## 🤝 Contributing
-
-Contributions are welcome! This project is in early planning stages.
-
-### Areas We Need Help With
-- Component library definitions
-- Code generators for additional frameworks
-- Templates and examples
-- Documentation and tutorials
-- Testing
-- UI/UX design
-
-### How to Contribute
-1. Read the [Implementation Plan](./TUI_DESIGNER_IMPLEMENTATION_PLAN.md)
-2. Check open issues
-3. Fork the repository
-4. Create a feature branch
-5. Submit a pull request
-
-## 💡 Inspiration
-
-This project draws inspiration from:
-- **Figma** - Visual design and component system
-- **ASCII Motion** - ASCII art editor architecture
-- **Builder.io** - Visual development platform
-- **Framer** - Interactive design tool
-
-## 📜 License
-
-MIT License - see [LICENSE](LICENSE) for details
-
-## 🌟 Star History
-
-If you find this project interesting, give it a star! ⭐
-
-## 📧 Contact
-
-- **Issues**: [GitHub Issues](https://github.com/jalonsogo/tui-studio/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/jalonsogo/tui-studio/discussions)
-- **Twitter**: [@yourusername](https://twitter.com/yourusername)
+MIT — see [LICENSE](LICENSE) for details.
 
 ---
 
-**Made with ❤️ for the TUI community**
+**Issues**: [GitHub Issues](https://github.com/jalonsogo/tui-studio/issues)

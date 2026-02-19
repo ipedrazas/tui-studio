@@ -1,3 +1,5 @@
+<img src="public/favicon_dark.svg" alt="TUIStudio" width="64" />
+
 # TUIStudio
 
 **Visual design tool for building Terminal User Interfaces**

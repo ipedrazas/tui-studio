@@ -1,4 +1,4 @@
-<img src="public/favicon_dark.svg" alt="TUIStudio" width="64" />
+<img src="public/logo-tui-studio_dark.svg" alt="TUIStudio" width="64" />
 
 # TUIStudio
 
@@ -16,14 +16,15 @@ A Figma-like visual editor for designing Terminal UI applications. Drag-and-drop
 - **Visual Canvas** — Drag-and-drop components with live ANSI preview at configurable zoom levels
 - **20+ TUI Components** — Screen, Box, Button, TextInput, Checkbox, Radio, Select, Toggle, Text, Spinner, ProgressBar, Table, List, Tree, Menu, Tabs, Breadcrumb, Modal, Popover, Tooltip, Spacer
 - **Layout Engine** — Absolute, Flexbox, and Grid layout modes with full property control
-- **Color Themes** — Dracula, Nord, Solarized Dark/Light, Monokai, One Dark, Gruvbox, Tokyo Night, Catppuccin — all updating the canvas in real-time
+- **Color Themes** — Dracula, Nord, Solarized Dark/Light, Monokai, Gruvbox, Tokyo Night, Nightfox, Sonokai — all updating the canvas in real-time
+- **Dark / Light Mode** — Toggle between dark and light editor UI; persists across sessions
 - **Layers Panel** — Hierarchical component tree with drag-to-reorder, visibility toggle, lock, and inline rename
 - **Property Panel** — Edit layout, style, and component-specific props for the selected component
 - **Undo / Redo** — Full history for all tree mutations
 - **Save / Load** — `.tui` JSON format via native OS file picker (Chrome/Edge) or browser download (Firefox/Safari)
 - **Multi-Framework Export** — Generate code for Ink, BubbleTea, Blessed, Textual, OpenTUI, Tview
-- **Command Palette** — `Cmd/Ctrl+P` for quick component creation and commands
-- **App Menu** — File, Edit, and Help menus accessible from the chevron next to the logo
+- **Command Palette** — `Cmd/Ctrl+P` for quick component creation, theme switching, and dark/light mode toggle
+- **Settings** — Accent color presets, dark/light mode toggle, and default download folder
 
 ## Quick Start
 
@@ -101,10 +102,6 @@ npm run build    # TypeScript compile + production build
 npm run lint     # ESLint
 npm run preview  # Preview production build
 ```
-
-## 📜 LOLcense
-
-For {root} sake I'm a designer. Mostly all the code has been written by chatGPT and ad latere.
 
 ---
 

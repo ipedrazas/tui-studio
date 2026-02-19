@@ -752,6 +752,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
   const showBorderBottom = node.style.borderBottom !== false;
   const showBorderLeft   = node.style.borderLeft   !== false;
   const hasCorners       = node.style.borderCorners !== false;
+  const isRoundedBorder  = node.style.borderStyle === 'rounded';
 
   let borderStyleProps: CSSProperties = { border: 'none' };
   if (hasBorder && borderColor) {
@@ -762,6 +763,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
         borderBottom: showBorderBottom ? `1px solid ${borderColor}` : 'none',
         borderLeft:   showBorderLeft   ? `1px solid ${borderColor}` : 'none',
         boxSizing: 'border-box',
+        ...(isRoundedBorder ? { borderRadius: `${Math.round(cellHeight * zoom * 0.4)}px` } : {}),
       };
     } else {
       const cw = cellWidth * zoom;

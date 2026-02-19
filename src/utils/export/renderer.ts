@@ -21,18 +21,13 @@ export function renderTree(
 ): string {
   if (!root) return '';
 
-  // Calculate layouts using viewport dimensions as available space constraints
+  // Calculate layouts using full canvas dimensions so fill-children expand
+  // correctly, matching what the canvas editor shows.
   layoutEngine.calculateLayout(root, options.width, options.height);
 
-  // Use the root's actual computed dimensions (auto-sizing) rather than the
-  // full viewport size. This prevents a small design from appearing as a tiny
-  // dot inside a massive empty canvas in exported output.
-  const rootLayout = layoutEngine.getLayout(root.id);
-  const renderWidth  = rootLayout?.width  ?? options.width;
-  const renderHeight = rootLayout?.height ?? options.height;
-
-  // Create canvas sized to the design's actual footprint
-  const canvas = new CharCanvas(renderWidth, renderHeight);
+  // Use the full canvas dimensions for the CharCanvas so the output matches
+  // the 80×25 (or whatever) terminal view the user designed against.
+  const canvas = new CharCanvas(options.width, options.height);
 
   // Render all visible components
   renderNodeToCanvas(root, canvas, options.colorMode || 'ansi16');
@@ -75,11 +70,8 @@ export function renderTreeToLines(
   if (!root) return [];
 
   layoutEngine.calculateLayout(root, options.width, options.height);
-  const rootLayout = layoutEngine.getLayout(root.id);
-  const renderWidth  = rootLayout?.width  ?? options.width;
-  const renderHeight = rootLayout?.height ?? options.height;
 
-  const canvas = new CharCanvas(renderWidth, renderHeight);
+  const canvas = new CharCanvas(options.width, options.height);
   renderNodeToCanvas(root, canvas, options.colorMode || 'ansi16');
 
   return canvas.toLines();

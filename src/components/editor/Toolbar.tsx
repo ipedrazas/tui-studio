@@ -1,12 +1,82 @@
 // Top toolbar with controls
 
 import { useState, useEffect, useRef } from 'react';
-import { Undo2, Redo2, ZoomIn, ZoomOut, Grid3x3, Save, Palette, Search, ChevronDown, ChevronRight, Github } from 'lucide-react';
+import { Undo2, Redo2, ZoomIn, ZoomOut, Grid3x3, Save, Palette, Search, ChevronDown, ChevronRight, Github, FolderOpen, Check } from 'lucide-react';
 import { useComponentStore, useCanvasStore, useThemeStore } from '../../stores';
 import { ExportModal } from '../export/ExportModal';
-import { THEME_NAMES } from '../../stores/themeStore';
+import { THEME_NAMES, THEMES } from '../../stores/themeStore';
 import { ComponentToolbar } from './ComponentToolbar';
 import { buildTuiData, saveTuiData, openTuiFile } from '../../utils/fileOps';
+import { selectDownloadFolder, getDownloadFolderName, isDirectoryPickerSupported } from '../../utils/downloadManager';
+import { ColorPicker } from '../properties/ColorPicker';
+
+// ── Accent color presets ──────────────────────────────────────────────────────
+
+const ACCENT_PRESETS = [
+  { name: 'TUIGreen', value: 'tuigreen', hex: '#3fcf8e', primary: '153 60% 53%', fg: '0 0% 5%' },
+  { name: 'Blue',     value: 'blue',     hex: '#3b82f6', primary: '221 83% 53%', fg: '0 0% 100%' },
+  { name: 'Red',      value: 'red',      hex: '#ef4444', primary: '0 84% 60%',   fg: '0 0% 100%' },
+  { name: 'Lime',     value: 'lime',     hex: '#84cc16', primary: '85 60% 45%',  fg: '0 0% 5%' },
+  { name: 'Orange',   value: 'orange',   hex: '#f97316', primary: '25 95% 53%',  fg: '0 0% 5%' },
+  { name: 'Rose',     value: 'rose',     hex: '#f43f5e', primary: '347 77% 50%', fg: '0 0% 100%' },
+  { name: 'Violet',   value: 'violet',   hex: '#8b5cf6', primary: '263 70% 58%', fg: '0 0% 100%' },
+  { name: 'Yellow',   value: 'yellow',   hex: '#eab308', primary: '48 96% 48%',  fg: '0 0% 5%' },
+] as const;
+
+type AccentPreset = typeof ACCENT_PRESETS[number]['value'] | 'custom';
+
+function hexToHsl(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
+function isLightHex(hex: string): boolean {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.5;
+}
+
+function resolveColorToHex(color: string, theme: typeof THEMES[keyof typeof THEMES]): string {
+  if (!color) return '#ffffff';
+  if (color.startsWith('#')) return color;
+  return theme[color as keyof typeof theme] || '#ffffff';
+}
+
+function applyAccentColor(preset: AccentPreset, customHex?: string) {
+  let primary: string;
+  let fg: string;
+  if (preset === 'custom' && customHex) {
+    const hex = customHex.startsWith('#') ? customHex : '#ffffff';
+    primary = hexToHsl(hex);
+    fg = isLightHex(hex) ? '0 0% 5%' : '0 0% 100%';
+  } else {
+    const found = ACCENT_PRESETS.find(p => p.value === preset) || ACCENT_PRESETS[0];
+    primary = found.primary;
+    fg = found.fg;
+  }
+  document.documentElement.style.setProperty('--primary', primary);
+  document.documentElement.style.setProperty('--primary-foreground', fg);
+  document.documentElement.style.setProperty('--ring', primary);
+  localStorage.setItem('settings-accent-preset', preset);
+  if (preset === 'custom' && customHex) {
+    localStorage.setItem('settings-accent-custom', customHex);
+  }
+}
 
 // ── Save dialog ───────────────────────────────────────────────────────────────
 
@@ -188,6 +258,161 @@ function AboutModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ── Settings modal ────────────────────────────────────────────────────────────
+
+function SettingsModal({ onClose }: { onClose: () => void }) {
+  useEscapeKey(onClose);
+  const themeStore = useThemeStore();
+
+  const [accentPreset, setAccentPresetState] = useState<AccentPreset>(
+    (localStorage.getItem('settings-accent-preset') as AccentPreset) || 'tuigreen'
+  );
+  const [customColor, setCustomColor] = useState(
+    localStorage.getItem('settings-accent-custom') || '#4ade80'
+  );
+  const [folderName, setFolderName] = useState(getDownloadFolderName);
+
+  const handlePresetClick = (preset: AccentPreset, hex?: string) => {
+    setAccentPresetState(preset);
+    applyAccentColor(preset, hex);
+    if (preset !== 'custom') setCustomColor(hex || customColor);
+  };
+
+  const handleCustomColorChange = (color: string) => {
+    const hex = resolveColorToHex(color, THEMES[themeStore.currentTheme as keyof typeof THEMES] || THEMES.dracula);
+    setCustomColor(hex);
+    setAccentPresetState('custom');
+    applyAccentColor('custom', hex);
+  };
+
+  const handleSelectFolder = async () => {
+    const name = await selectDownloadFolder();
+    if (name) setFolderName(name);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div
+        className="bg-card border border-border rounded-xl shadow-2xl p-6 w-[480px] max-h-[80vh] overflow-y-auto"
+        onClick={e => e.stopPropagation()}
+      >
+        <h2 className="text-sm font-semibold mb-5">Settings</h2>
+
+        {/* Download Folder */}
+        <div className="mb-6">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">
+            Default Download Folder
+          </p>
+          {isDirectoryPickerSupported() ? (
+            <>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 px-3 py-1.5 bg-input border border-border/50 rounded text-sm text-muted-foreground truncate min-w-0">
+                  {folderName || 'System default (Downloads)'}
+                </div>
+                <button
+                  onClick={handleSelectFolder}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary hover:bg-accent border border-border/50 rounded text-sm transition-colors whitespace-nowrap"
+                >
+                  <FolderOpen className="w-3.5 h-3.5" />
+                  Browse…
+                </button>
+              </div>
+              {folderName && (
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('settings-download-folder');
+                    setFolderName('');
+                  }}
+                  className="mt-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Reset to default
+                </button>
+              )}
+            </>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">
+              Folder selection requires Chrome or Edge. Files will save to your browser's Downloads folder.
+            </p>
+          )}
+        </div>
+
+        {/* Accent Color */}
+        <div className="mb-6">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-3">
+            Editor Accent Color
+          </p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {ACCENT_PRESETS.map(preset => (
+              <button
+                key={preset.value}
+                onClick={() => handlePresetClick(preset.value, preset.hex)}
+                title={preset.name}
+                className="relative w-8 h-8 rounded-full border-2 transition-all"
+                style={{
+                  backgroundColor: preset.hex,
+                  borderColor: accentPreset === preset.value ? 'white' : 'transparent',
+                  outline: accentPreset === preset.value ? `2px solid ${preset.hex}` : 'none',
+                  outlineOffset: '2px',
+                }}
+              >
+                {accentPreset === preset.value && (
+                  <Check className="w-3.5 h-3.5 absolute inset-0 m-auto" style={{ color: preset.fg === '0 0% 5%' ? '#000' : '#fff' }} />
+                )}
+              </button>
+            ))}
+
+            {/* Custom option */}
+            <button
+              onClick={() => {
+                setAccentPresetState('custom');
+                applyAccentColor('custom', customColor);
+              }}
+              className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-[9px] font-bold transition-all ${
+                accentPreset === 'custom'
+                  ? 'border-white outline outline-2 outline-offset-2'
+                  : 'border-border hover:border-border/80'
+              }`}
+              style={{
+                background: accentPreset === 'custom' ? customColor : 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
+                outlineColor: accentPreset === 'custom' ? customColor : 'transparent',
+              }}
+              title="Custom color"
+            />
+          </div>
+
+          {/* Custom color picker */}
+          {accentPreset === 'custom' && (
+            <div className="pl-1">
+              <ColorPicker
+                value={customColor.startsWith('#') ? customColor : undefined}
+                onChange={handleCustomColorChange}
+                label="Custom accent color"
+              />
+            </div>
+          )}
+
+          {/* Preset name label */}
+          <p className="text-[11px] text-muted-foreground mt-2">
+            {accentPreset === 'custom'
+              ? 'Custom'
+              : ACCENT_PRESETS.find(p => p.value === accentPreset)?.name || ''
+            }
+          </p>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg font-medium transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── App menu (chevron dropdown next to logo) ─────────────────────────────────
 
 const isMac = typeof navigator !== 'undefined' && /mac/i.test(navigator.platform);
@@ -239,6 +464,9 @@ function AppMenu() {
           { label: 'Paste', shortcut: `${mod}V`, action: () => dispatch('command-paste') },
         ],
       },
+    ],
+    [
+      { label: 'Settings', shortcut: `${mod}K`, action: () => dispatch('command-settings') },
     ],
     [
       {
@@ -322,9 +550,17 @@ export function Toolbar() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [isToolbarDocked, setIsToolbarDocked] = useState(() =>
     JSON.parse(localStorage.getItem('toolbar-docked') || 'false')
   );
+
+  // Apply saved accent color on mount
+  useEffect(() => {
+    const preset = (localStorage.getItem('settings-accent-preset') as AccentPreset) || 'tuigreen';
+    const custom = localStorage.getItem('settings-accent-custom') || '#4ade80';
+    applyAccentColor(preset, custom);
+  }, []);
 
   const canUndo = componentStore.historyIndex > 0;
   const canRedo = componentStore.historyIndex < componentStore.history.length - 1;
@@ -364,6 +600,13 @@ export function Toolbar() {
     const handler = () => setHelpOpen(true);
     window.addEventListener('command-help', handler);
     return () => window.removeEventListener('command-help', handler);
+  }, []);
+
+  // Listen for settings trigger
+  useEffect(() => {
+    const handler = () => setSettingsOpen(true);
+    window.addEventListener('command-settings', handler);
+    return () => window.removeEventListener('command-settings', handler);
   }, []);
 
   return (
@@ -504,6 +747,9 @@ export function Toolbar() {
 
       {/* Help Modal */}
       {helpOpen && <HelpModal onClose={() => setHelpOpen(false)} />}
+
+      {/* Settings Modal */}
+      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
     </>
   );
 }

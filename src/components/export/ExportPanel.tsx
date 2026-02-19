@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Download, Copy, Eye } from 'lucide-react';
 import { useComponentStore, useCanvasStore } from '../../stores';
 import { exportToText, exportToCode, exportToHtmlFile, ansiToHtml } from '../../utils/export';
+import { saveToDownloadFolder } from '../../utils/downloadManager';
 // ExportFormat is typed as an interface but used as a string in the codebase
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CodeFormat = any;
@@ -39,7 +40,7 @@ export function ExportPanel() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     const output = mode === 'code'
       ? (codeFormat === 'html'
           ? exportToHtmlFile(componentStore.root, canvasStore.width, canvasStore.height)
@@ -55,6 +56,11 @@ export function ExportPanel() {
     const filename = `tui-design${extension}`;
     const mimeType = codeFormat === 'html' && mode === 'code' ? 'text/html' : 'text/plain';
 
+    // Try saving to the user's selected download folder first
+    const savedToFolder = await saveToDownloadFolder(output, filename);
+    if (savedToFolder) return;
+
+    // Fall back to browser download link
     const blob = new Blob([output], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

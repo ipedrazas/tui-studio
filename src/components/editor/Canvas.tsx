@@ -599,8 +599,25 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
       case 'List': {
         const items = (node.props.items as any[]) || [];
         const selectedIndex = (node.props.selectedIndex as number) || 0;
+        const justifyMap: Record<string, string> = {
+          start: 'flex-start', center: 'center', end: 'flex-end',
+          'space-between': 'space-between', between: 'space-between',
+          'space-around': 'space-around', around: 'space-around',
+          'space-evenly': 'space-evenly', evenly: 'space-evenly',
+        };
+        const alignMap: Record<string, string> = {
+          start: 'flex-start', center: 'center', end: 'flex-end',
+        };
+        const justify = (node.layout as any).justify as string | undefined;
+        const align = (node.layout as any).align as string | undefined;
         return (
-          <div className="font-mono text-xs">
+          <div
+            className="font-mono text-xs flex flex-col w-full h-full"
+            style={{
+              justifyContent: justifyMap[justify || ''] || 'flex-start',
+              alignItems: alignMap[align || ''] || 'flex-start',
+            }}
+          >
             {items.map((item, i) => {
               const itemData = typeof item === 'string' ? { label: item, icon: '•', hotkey: '' } : item;
               const isSelected = i === selectedIndex;

@@ -31,7 +31,7 @@
     --card-foreground: 0 0% 95%;
     --popover: 0 0% 10%;
     --popover-foreground: 0 0% 95%;
-    --primary: 84 85% 50%;
+    --primary: 153 60% 53%;
     --primary-foreground: 0 0% 5%;
     --secondary: 0 0% 14%;
     --secondary-foreground: 0 0% 95%;
@@ -41,7 +41,7 @@
     --accent-foreground: 0 0% 95%;
     --border: 0 0% 18%;
     --input: 0 0% 14%;
-    --ring: 84 85% 50%;
+    --ring: 153 60% 53%;
     --radius: 0.75rem;
   }
 }

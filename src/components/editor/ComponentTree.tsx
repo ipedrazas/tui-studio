@@ -569,7 +569,9 @@ function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level:
             {getComponentIcon(node.type)}
           </span>
           {warningNodeIds.has(node.id) && (
-            <AlertTriangle className="w-3 h-3 text-yellow-500 flex-shrink-0" title="Layout warning" />
+            <span title="Layout warning" className="flex-shrink-0">
+              <AlertTriangle className="w-3 h-3 text-yellow-500" aria-hidden="true" focusable="false" />
+            </span>
           )}
           {isEditing ? (
             <input

@@ -32,7 +32,7 @@ export function renderComponent(node: ComponentNode, width: number, height: numb
       content = renderText(node, width, height);
       break;
     case 'Button':
-      content = renderButton(node, width, height);
+      content = renderButton(node, width);
       break;
     case 'TextInput':
       content = renderTextInput(node, width, height);
@@ -108,7 +108,7 @@ function renderText(node: ComponentNode, width: number, height: number): string[
   return aligned;
 }
 
-function renderButton(node: ComponentNode, width: number, height: number): string[] {
+function renderButton(node: ComponentNode, width: number): string[] {
   const label = (node.props.label as string) || 'Button';
   const iconLeft = (node.props.iconLeftEnabled && node.props.iconLeft) ? (node.props.iconLeft as string) : '';
   const iconRight = (node.props.iconRightEnabled && node.props.iconRight) ? (node.props.iconRight as string) : '';

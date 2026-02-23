@@ -12,7 +12,6 @@ interface StyleEditorProps {
 
 const sectionLabel = 'text-[9px] text-muted-foreground uppercase tracking-wide';
 const fieldLabel   = 'text-[9px] text-muted-foreground block mb-0.5 uppercase tracking-wide';
-const inputCls     = 'w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none';
 const selectCls    = 'w-full px-1.5 py-0.5 bg-input border border-border/50 rounded text-[11px] focus:border-primary focus:outline-none';
 
 function Checkbox({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
@@ -84,10 +83,9 @@ function BorderSidesGrid({
 
   return (
     <div className="grid grid-cols-2 gap-1">
-      {BORDER_SIDES.map(({ key, styleKey, icon, chars }) => {
+      {BORDER_SIDES.map(({ key, styleKey, icon }) => {
         const isActive   = component.style[key] !== false;
         const sideStyle  = (component.style[styleKey] ?? globalStyle) as BorderStyleValue;
-        const activeChar = chars[sideStyle] ?? chars.single;
 
         return (
           <div key={key} className="flex items-center gap-1">

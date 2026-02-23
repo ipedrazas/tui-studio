@@ -238,8 +238,6 @@ export const THEME_NAMES: { value: ThemeName; label: string }[] = [
   { value: 'sonokai', label: 'Sonokai' },
 ];
 
-const defaultAnsiColors = THEMES.default;
-
 const savedDarkMode = typeof window !== 'undefined'
   ? localStorage.getItem('settings-dark-mode') !== 'false'
   : true;

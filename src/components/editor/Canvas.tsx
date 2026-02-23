@@ -6,7 +6,6 @@ import { layoutEngine } from '../../utils/layout';
 import { dragStore } from '../../hooks/useDragAndDrop';
 import { COMPONENT_LIBRARY, canHaveChildren } from '../../constants/components';
 import { THEMES } from '../../stores/themeStore';
-import type { ComponentNode } from '../../types';
 import { interpolateGradientColor } from '../../utils/rendering/ansi';
 import { ComponentToolbar } from './ComponentToolbar';
 import { NumericInput } from '../properties/LayoutEditor';
@@ -918,6 +917,7 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
 
   const x = layout.x * cellWidth * zoom;
   const y = layout.y * cellHeight * zoom;
+  const paddingValue = typeof node.layout.padding === 'number' ? node.layout.padding : undefined;
 
   const handleDragStart = (e: React.DragEvent) => {
     e.stopPropagation();
@@ -1084,8 +1084,8 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
           justifyContent: node.type === 'Text'
             ? ((node.props.align === 'right') ? 'flex-end' : (node.props.align === 'center') ? 'center' : 'flex-start')
             : ['Checkbox', 'Radio', 'Menu', 'Tabs', 'Breadcrumb'].includes(node.type) ? 'flex-start' : 'center',
-          padding: node.layout.padding !== undefined
-            ? `${node.layout.padding * cellHeight * zoom}px ${node.layout.padding * cellWidth * zoom}px`
+          padding: paddingValue !== undefined
+            ? `${paddingValue * cellHeight * zoom}px ${paddingValue * cellWidth * zoom}px`
             : undefined,
         }}
         onClick={(e) => {

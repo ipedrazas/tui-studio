@@ -151,7 +151,7 @@ export class LayoutEngine {
         break;
       default:
         // Stack children vertically for 'none' layout
-        childLayouts = this.calculateStackLayout(container, containerWidth, containerHeight);
+        childLayouts = this.calculateStackLayout(container, containerWidth);
         break;
     }
 
@@ -192,7 +192,6 @@ export class LayoutEngine {
   private calculateStackLayout(
     container: ComponentNode,
     containerWidth: number,
-    containerHeight: number
   ): Map<string, ComputedLayout> {
     const layouts = new Map<string, ComputedLayout>();
     const padding = typeof container.layout.padding === 'number' ? container.layout.padding : 0;

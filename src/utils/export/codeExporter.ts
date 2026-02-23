@@ -1,13 +1,13 @@
 // Code generation for different TUI frameworks
 
-import type { ComponentNode, ExportFormat } from '../../types';
+import type { ComponentNode } from '../../types';
 
 /**
  * Export design to framework-specific code
  */
 export function exportToCode(
   root: ComponentNode | null,
-  format: ExportFormat
+  format: string
 ): string {
   if (!root) return '';
 

@@ -1,3 +1,5 @@
+import { ComponentLibrary } from './components';
+
 // Layout calculation types
 
 export interface LayoutBox {

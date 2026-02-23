@@ -792,11 +792,6 @@ function TableEditor({
   rows: string[][];
   onChange: (columns: string[], rows: string[][]) => void;
 }) {
-  const addColumn = () => {
-    const newCols = [...columns, `Col ${columns.length + 1}`];
-    const newRows = rows.map(r => [...r, '']);
-    onChange(newCols, newRows);
-  };
   const insertColumnAfter = (ci: number) => {
     const newCols = [...columns.slice(0, ci + 1), `Col ${columns.length + 1}`, ...columns.slice(ci + 1)];
     const newRows = rows.map(r => [...r.slice(0, ci + 1), '', ...r.slice(ci + 1)]);

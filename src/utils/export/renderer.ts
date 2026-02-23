@@ -1,7 +1,6 @@
 // Main renderer for exporting TUI designs
 
 import type { ComponentNode } from '../../types';
-import type { ComputedLayout } from '../layout';
 import { layoutEngine } from '../layout';
 import { CharCanvas } from '../rendering/canvas';
 import { renderComponent } from '../rendering/components';

@@ -14,8 +14,8 @@
 #     - README.md
 #     - LICENSE
 #
-# coverage:
-#   threshold: 80
+coverage:
+  threshold: 40
 #
 checks:
   disabled:
@@ -31,7 +31,7 @@ checks:
     - common:errors
     - common:contributing
     - node:type
-    - "*:logging"
+    - '*:logging'
     - common:ci
     - common:health
     - common:license

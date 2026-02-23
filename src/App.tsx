@@ -19,9 +19,11 @@ let componentClipboard: import('./types').ComponentNode[] = [];
 function pasteTree(
   node: import('./types').ComponentNode,
   parentId: string,
-  store: { addComponent: (parentId: string, c: Omit<import('./types').ComponentNode, 'id'>) => string },
+  store: {
+    addComponent: (parentId: string, c: Omit<import('./types').ComponentNode, 'id'>) => string;
+  },
   offsetX = 0,
-  offsetY = 0,
+  offsetY = 0
 ): string {
   const { children, layout, ...rest } = node;
   const newId = store.addComponent(parentId, {
@@ -71,72 +73,74 @@ function App() {
   }, [componentStore]);
 
   // Handle adding component from command palette
-  const handleAddComponent = useCallback((type: ComponentType) => {
-    const root = componentStore.root;
-    let parentId = root?.id;
+  const handleAddComponent = useCallback(
+    (type: ComponentType) => {
+      const root = componentStore.root;
+      let parentId = root?.id;
 
-    // Create root if it doesn't exist
-    if (!parentId) {
-      const newRoot: import('./types').ComponentNode = {
-        id: 'root',
-        type: 'Screen',
-        name: 'Main Screen',
-        props: { width: 80, height: 24, theme: 'dracula' },
-        layout: {
-          type: 'absolute',
-        },
-        style: {
-          border: false,
-        },
-        events: {},
-        children: [],
-        locked: false,
-        hidden: false,
-        collapsed: false,
-      };
-      componentStore.setRoot(newRoot);
-      parentId = 'root';
-    }
-
-    const def = COMPONENT_LIBRARY[type];
-    if (def) {
-      // Calculate position with offset so components don't stack
-      const existingChildren = root?.children.length || 0;
-      const offsetX = existingChildren * 2;
-      const offsetY = existingChildren * 2;
-
-      const newComponent: Omit<import('./types').ComponentNode, 'id'> = {
-        type: def.type,
-        name: def.name,
-        props: { ...def.defaultProps },
-        layout: {
-          ...def.defaultLayout,
-          x: offsetX,
-          y: offsetY,
-        },
-        style: { ...def.defaultStyle },
-        events: { ...def.defaultEvents },
-        children: [],
-        locked: false,
-        hidden: false,
-        collapsed: false,
-      };
-
-      const id = componentStore.addComponent(parentId, newComponent);
-      if (id) {
-        selectionStore.select(id);
+      // Create root if it doesn't exist
+      if (!parentId) {
+        const newRoot: import('./types').ComponentNode = {
+          id: 'root',
+          type: 'Screen',
+          name: 'Main Screen',
+          props: { width: 80, height: 24, theme: 'dracula' },
+          layout: {
+            type: 'absolute',
+          },
+          style: {
+            border: false,
+          },
+          events: {},
+          children: [],
+          locked: false,
+          hidden: false,
+          collapsed: false,
+        };
+        componentStore.setRoot(newRoot);
+        parentId = 'root';
       }
-    }
-  }, [componentStore, selectionStore]);
+
+      const def = COMPONENT_LIBRARY[type];
+      if (def) {
+        // Calculate position with offset so components don't stack
+        const existingChildren = root?.children.length || 0;
+        const offsetX = existingChildren * 2;
+        const offsetY = existingChildren * 2;
+
+        const newComponent: Omit<import('./types').ComponentNode, 'id'> = {
+          type: def.type,
+          name: def.name,
+          props: { ...def.defaultProps },
+          layout: {
+            ...def.defaultLayout,
+            x: offsetX,
+            y: offsetY,
+          },
+          style: { ...def.defaultStyle },
+          events: { ...def.defaultEvents },
+          children: [],
+          locked: false,
+          hidden: false,
+          collapsed: false,
+        };
+
+        const id = componentStore.addComponent(parentId, newComponent);
+        if (id) {
+          selectionStore.select(id);
+        }
+      }
+    },
+    [componentStore, selectionStore]
+  );
 
   // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't handle shortcuts when typing in inputs
       const target = e.target as HTMLElement;
-      const isTyping = target.tagName === 'INPUT' ||
-                      target.tagName === 'TEXTAREA' ||
-                      target.isContentEditable;
+      const isTyping =
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
       // Help / Keyboard shortcuts (Ctrl/Cmd+?)
       if ((e.metaKey || e.ctrlKey) && e.key === '?') {
@@ -249,23 +253,30 @@ function App() {
       }
 
       // Component creation hotkeys (only when not typing and palette closed)
-      if (!isTyping && !commandPaletteOpen && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+      if (
+        !isTyping &&
+        !commandPaletteOpen &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey &&
+        !e.shiftKey
+      ) {
         const hotkeyMap: Record<string, ComponentType> = {
-          'b': 'Button',
-          'r': 'Box',
-          'k': 'Checkbox',
-          'a': 'Radio',
-          's': 'Select',
-          'i': 'TextInput',
-          'o': 'Toggle',
-          'p': 'ProgressBar',
-          'n': 'Spinner',
-          'y': 'Text',
-          't': 'Tabs',
-          'l': 'List',
-          'e': 'Tree',
-          'm': 'Menu',
-          'j': 'Spacer',
+          b: 'Button',
+          r: 'Box',
+          k: 'Checkbox',
+          a: 'Radio',
+          s: 'Select',
+          i: 'TextInput',
+          o: 'Toggle',
+          p: 'ProgressBar',
+          n: 'Spinner',
+          y: 'Text',
+          t: 'Tabs',
+          l: 'List',
+          e: 'Tree',
+          m: 'Menu',
+          j: 'Spacer',
         };
 
         const componentType = hotkeyMap[e.key.toLowerCase()];

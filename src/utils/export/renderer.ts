@@ -14,10 +14,7 @@ export interface RenderOptions {
 /**
  * Render the entire component tree to text output
  */
-export function renderTree(
-  root: ComponentNode | null,
-  options: RenderOptions
-): string {
+export function renderTree(root: ComponentNode | null, options: RenderOptions): string {
   if (!root) return '';
 
   // Calculate layouts using full canvas dimensions so fill-children expand
@@ -62,10 +59,7 @@ function renderNodeToCanvas(
 /**
  * Export lines as an array (useful for testing)
  */
-export function renderTreeToLines(
-  root: ComponentNode | null,
-  options: RenderOptions
-): string[] {
+export function renderTreeToLines(root: ComponentNode | null, options: RenderOptions): string[] {
   if (!root) return [];
 
   layoutEngine.calculateLayout(root, options.width, options.height);

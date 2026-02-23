@@ -1,15 +1,7 @@
 // Hierarchical component tree view
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import {
-  ChevronDown,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  Lock,
-  Unlock,
-  AlertTriangle,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, Eye, EyeOff, Lock, Unlock, AlertTriangle } from 'lucide-react';
 import { useComponentStore, useSelectionStore } from '../../stores';
 import type { ComponentNode } from '../../types';
 import { getComponentIcon } from './componentIcons';
@@ -44,7 +36,9 @@ function ContextMenu({ state, node, onClose }: ContextMenuProps) {
     const handleClick = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
     };
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     document.addEventListener('mousedown', handleClick);
     document.addEventListener('keydown', handleKey);
     return () => {
@@ -59,80 +53,93 @@ function ContextMenu({ state, node, onClose }: ContextMenuProps) {
     if (!menuRef.current) return;
     const { width, height } = menuRef.current.getBoundingClientRect();
     setPos({
-      x: Math.min(state.x, window.innerWidth  - width  - 8),
+      x: Math.min(state.x, window.innerWidth - width - 8),
       y: Math.min(state.y, window.innerHeight - height - 8),
     });
   }, [state.x, state.y]);
 
-  const run = (fn: () => void) => { fn(); onClose(); };
+  const run = (fn: () => void) => {
+    fn();
+    onClose();
+  };
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
-  const handleCopy = () => run(() => {
-    // Dispatch the same copy event handled in App.tsx
-    selectionStore.select(node.id);
-    window.dispatchEvent(new CustomEvent('tree-context-copy', { detail: { id: node.id } }));
-  });
-
-  const handleCopyStyle = () => run(() => {
-    styleClipboard = { ...node.style };
-  });
-
-  const handlePasteStyle = () => run(() => {
-    if (!styleClipboard) return;
-    componentStore.updateComponent(node.id, { style: { ...node.style, ...styleClipboard } });
-  });
-
-  const wrapInBox = () => run(() => {
-    const selectedIds = Array.from(selectionStore.selectedIds);
-    const idsToGroup = selectedIds.length > 1 ? selectedIds : [node.id];
-    const boxDef = COMPONENT_LIBRARY['Box'];
-    const newBoxId = componentStore.groupComponents(idsToGroup, {
-      type: 'Box',
-      name: 'Box',
-      props:    { ...boxDef.defaultProps },
-      layout:   { ...boxDef.defaultLayout },
-      style:    { ...boxDef.defaultStyle },
-      events:   { ...boxDef.defaultEvents },
-      locked: false,
-      hidden: false,
-      collapsed: false,
+  const handleCopy = () =>
+    run(() => {
+      // Dispatch the same copy event handled in App.tsx
+      selectionStore.select(node.id);
+      window.dispatchEvent(new CustomEvent('tree-context-copy', { detail: { id: node.id } }));
     });
-    if (newBoxId) selectionStore.select(newBoxId);
-  });
 
-  const handleRename = () => run(() => {
-    // Signal the TreeNode to start inline editing
-    window.dispatchEvent(new CustomEvent('tree-start-rename', { detail: { id: node.id } }));
-  });
+  const handleCopyStyle = () =>
+    run(() => {
+      styleClipboard = { ...node.style };
+    });
 
-  const handleToggleVisible = () => run(() => {
-    componentStore.updateComponent(node.id, { hidden: !node.hidden });
-  });
+  const handlePasteStyle = () =>
+    run(() => {
+      if (!styleClipboard) return;
+      componentStore.updateComponent(node.id, { style: { ...node.style, ...styleClipboard } });
+    });
 
-  const handleToggleLock = () => run(() => {
-    componentStore.updateComponent(node.id, { locked: !node.locked });
-  });
+  const wrapInBox = () =>
+    run(() => {
+      const selectedIds = Array.from(selectionStore.selectedIds);
+      const idsToGroup = selectedIds.length > 1 ? selectedIds : [node.id];
+      const boxDef = COMPONENT_LIBRARY['Box'];
+      const newBoxId = componentStore.groupComponents(idsToGroup, {
+        type: 'Box',
+        name: 'Box',
+        props: { ...boxDef.defaultProps },
+        layout: { ...boxDef.defaultLayout },
+        style: { ...boxDef.defaultStyle },
+        events: { ...boxDef.defaultEvents },
+        locked: false,
+        hidden: false,
+        collapsed: false,
+      });
+      if (newBoxId) selectionStore.select(newBoxId);
+    });
 
-  const handleDelete = () => run(() => {
-    if (node.id === 'root' || node.locked) return;
-    componentStore.removeComponent(node.id);
-    selectionStore.clearSelection();
-  });
+  const handleRename = () =>
+    run(() => {
+      // Signal the TreeNode to start inline editing
+      window.dispatchEvent(new CustomEvent('tree-start-rename', { detail: { id: node.id } }));
+    });
 
-  const selectedContainerIds = Array.from(selectionStore.selectedIds).filter(id => {
+  const handleToggleVisible = () =>
+    run(() => {
+      componentStore.updateComponent(node.id, { hidden: !node.hidden });
+    });
+
+  const handleToggleLock = () =>
+    run(() => {
+      componentStore.updateComponent(node.id, { locked: !node.locked });
+    });
+
+  const handleDelete = () =>
+    run(() => {
+      if (node.id === 'root' || node.locked) return;
+      componentStore.removeComponent(node.id);
+      selectionStore.clearSelection();
+    });
+
+  const selectedContainerIds = Array.from(selectionStore.selectedIds).filter((id) => {
     const c = componentStore.getComponent(id);
     return c && c.children.length > 0;
   });
 
-  const canUngroup = node.id !== 'root' && (selectedContainerIds.length > 0 || node.children.length > 0);
+  const canUngroup =
+    node.id !== 'root' && (selectedContainerIds.length > 0 || node.children.length > 0);
 
-  const ungroup = () => run(() => {
-    const ids = selectedContainerIds.length > 0 ? selectedContainerIds : [node.id];
-    const childIds = componentStore.ungroupComponents(ids);
-    if (childIds.length === 1) selectionStore.select(childIds[0]);
-    else if (childIds.length > 1) selectionStore.selectMultiple(childIds);
-  });
+  const ungroup = () =>
+    run(() => {
+      const ids = selectedContainerIds.length > 0 ? selectedContainerIds : [node.id];
+      const childIds = componentStore.ungroupComponents(ids);
+      if (childIds.length === 1) selectionStore.select(childIds[0]);
+      else if (childIds.length > 1) selectionStore.selectMultiple(childIds);
+    });
 
   const isRoot = node.id === 'root';
 
@@ -141,18 +148,34 @@ function ContextMenu({ state, node, onClose }: ContextMenuProps) {
     | { type: 'sep' };
 
   const items: Item[] = [
-    { type: 'item', label: 'Copy',                   action: handleCopy,          disabled: isRoot },
-    { type: 'item', label: 'Copy Style Properties',  action: handleCopyStyle },
-    { type: 'item', label: 'Paste Style Properties', action: handlePasteStyle,    disabled: !styleClipboard || isRoot },
+    { type: 'item', label: 'Copy', action: handleCopy, disabled: isRoot },
+    { type: 'item', label: 'Copy Style Properties', action: handleCopyStyle },
+    {
+      type: 'item',
+      label: 'Paste Style Properties',
+      action: handlePasteStyle,
+      disabled: !styleClipboard || isRoot,
+    },
     { type: 'sep' },
-    { type: 'item', label: 'Group into Box',         action: wrapInBox,           disabled: isRoot },
-    { type: 'item', label: 'Ungroup',                action: ungroup,             disabled: !canUngroup },
-    { type: 'item', label: 'Rename',                 action: handleRename,        disabled: isRoot },
+    { type: 'item', label: 'Group into Box', action: wrapInBox, disabled: isRoot },
+    { type: 'item', label: 'Ungroup', action: ungroup, disabled: !canUngroup },
+    { type: 'item', label: 'Rename', action: handleRename, disabled: isRoot },
     { type: 'sep' },
-    { type: 'item', label: node.hidden ? 'Show'  : 'Hide',   action: handleToggleVisible, disabled: isRoot },
-    { type: 'item', label: node.locked ? 'Unlock': 'Lock',   action: handleToggleLock },
+    {
+      type: 'item',
+      label: node.hidden ? 'Show' : 'Hide',
+      action: handleToggleVisible,
+      disabled: isRoot,
+    },
+    { type: 'item', label: node.locked ? 'Unlock' : 'Lock', action: handleToggleLock },
     { type: 'sep' },
-    { type: 'item', label: 'Delete',                 action: handleDelete,        disabled: isRoot || node.locked, destructive: true },
+    {
+      type: 'item',
+      label: 'Delete',
+      action: handleDelete,
+      disabled: isRoot || node.locked,
+      destructive: true,
+    },
   ];
 
   return (
@@ -186,7 +209,11 @@ function ContextMenu({ state, node, onClose }: ContextMenuProps) {
   );
 }
 
-export function ComponentTree({ warningNodeIds = new Set<string>() }: { warningNodeIds?: Set<string> }) {
+export function ComponentTree({
+  warningNodeIds = new Set<string>(),
+}: {
+  warningNodeIds?: Set<string>;
+}) {
   const componentStore = useComponentStore();
   const [canvasMenu, setCanvasMenu] = useState<{ id: string; x: number; y: number } | null>(null);
 
@@ -200,9 +227,8 @@ export function ComponentTree({ warningNodeIds = new Set<string>() }: { warningN
     return () => window.removeEventListener('canvas-context-menu', handler);
   }, []);
 
-  const canvasMenuNode = canvasMenu && componentStore.root
-    ? findNodeById(componentStore.root, canvasMenu.id)
-    : null;
+  const canvasMenuNode =
+    canvasMenu && componentStore.root ? findNodeById(componentStore.root, canvasMenu.id) : null;
 
   if (!componentStore.root) {
     return (
@@ -226,7 +252,15 @@ export function ComponentTree({ warningNodeIds = new Set<string>() }: { warningN
   );
 }
 
-function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level: number; warningNodeIds: Set<string> }) {
+function TreeNode({
+  node,
+  level,
+  warningNodeIds,
+}: {
+  node: ComponentNode;
+  level: number;
+  warningNodeIds: Set<string>;
+}) {
   const componentStore = useComponentStore();
   const selectionStore = useSelectionStore();
   const [isDragOver, setIsDragOver] = useState(false);
@@ -256,12 +290,15 @@ function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level:
     return () => window.removeEventListener('tree-start-rename', handler);
   }, [node.id, node.name]);
 
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setContextMenu({ x: e.clientX, y: e.clientY });
-    if (node.id !== 'root' && !selectionStore.isSelected(node.id)) selectionStore.select(node.id);
-  }, [node.id, selectionStore]);
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setContextMenu({ x: e.clientX, y: e.clientY });
+      if (node.id !== 'root' && !selectionStore.isSelected(node.id)) selectionStore.select(node.id);
+    },
+    [node.id, selectionStore]
+  );
 
   const startEditing = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -383,11 +420,11 @@ function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level:
 
       if (insertBefore && parent) {
         // Insert before this node (as sibling)
-        const index = parent.children.findIndex(c => c.id === node.id);
+        const index = parent.children.findIndex((c) => c.id === node.id);
         componentStore.moveComponent(dragData.componentId, parent.id, index);
       } else if (insertionIndex === -1 && parent) {
         // Insert after this node (as sibling)
-        const index = parent.children.findIndex(c => c.id === node.id);
+        const index = parent.children.findIndex((c) => c.id === node.id);
         componentStore.moveComponent(dragData.componentId, parent.id, index + 1);
       } else if (canHaveChildren(node.type)) {
         // Make child of this node (only if container)
@@ -412,11 +449,11 @@ function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level:
 
       if (insertBefore && parent) {
         // Insert before this node (as sibling)
-        const index = parent.children.findIndex(c => c.id === node.id);
+        const index = parent.children.findIndex((c) => c.id === node.id);
         componentStore.addComponent(parent.id, newComponent, index);
       } else if (insertionIndex === -1 && parent) {
         // Insert after this node (as sibling)
-        const index = parent.children.findIndex(c => c.id === node.id);
+        const index = parent.children.findIndex((c) => c.id === node.id);
         componentStore.addComponent(parent.id, newComponent, index + 1);
       } else if (canHaveChildren(node.type)) {
         // Add as child of this node (only if container)
@@ -460,8 +497,15 @@ function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level:
           isDragOver ? 'bg-primary/30 border-2 border-dashed border-primary' : ''
         } ${isDragging ? 'opacity-30' : ''}`}
         style={{ paddingLeft: `${level * 12 + 8}px` }}
-        onMouseDown={(e) => { if (node.id !== 'root' && e.shiftKey) { e.preventDefault(); selectionStore.select(node.id, true); } }}
-        onClick={(e) => { if (node.id !== 'root' && !e.shiftKey) selectionStore.select(node.id); }}
+        onMouseDown={(e) => {
+          if (node.id !== 'root' && e.shiftKey) {
+            e.preventDefault();
+            selectionStore.select(node.id, true);
+          }
+        }}
+        onClick={(e) => {
+          if (node.id !== 'root' && !e.shiftKey) selectionStore.select(node.id);
+        }}
       >
         {/* Expand/Collapse */}
         {hasChildren ? (
@@ -484,12 +528,14 @@ function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level:
 
         {/* Icon & Name */}
         <div className="flex-1 flex items-center gap-2 min-w-0">
-          <span className="text-muted-foreground flex-shrink-0">
-            {getComponentIcon(node.type)}
-          </span>
+          <span className="text-muted-foreground flex-shrink-0">{getComponentIcon(node.type)}</span>
           {warningNodeIds.has(node.id) && (
             <span title="Layout warning" className="flex-shrink-0">
-              <AlertTriangle className="w-3 h-3 text-yellow-500" aria-hidden="true" focusable="false" />
+              <AlertTriangle
+                className="w-3 h-3 text-yellow-500"
+                aria-hidden="true"
+                focusable="false"
+              />
             </span>
           )}
           {isEditing ? (
@@ -499,18 +545,21 @@ function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level:
               onChange={(e) => setEditName(e.target.value)}
               onBlur={commitEdit}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') { e.preventDefault(); commitEdit(); }
-                if (e.key === 'Escape') { e.preventDefault(); cancelEdit(); }
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  commitEdit();
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  cancelEdit();
+                }
                 e.stopPropagation();
               }}
               onClick={(e) => e.stopPropagation()}
               className="flex-1 min-w-0 text-xs bg-background border border-primary rounded px-1 py-0 outline-none"
             />
           ) : (
-            <span
-              className="text-xs truncate"
-              onDoubleClick={startEditing}
-            >
+            <span className="text-xs truncate" onDoubleClick={startEditing}>
               {node.name}
             </span>
           )}
@@ -524,11 +573,7 @@ function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level:
               className="p-1 hover:bg-secondary rounded"
               title={node.hidden ? 'Show' : 'Hide'}
             >
-              {node.hidden ? (
-                <EyeOff className="w-3 h-3" />
-              ) : (
-                <Eye className="w-3 h-3" />
-              )}
+              {node.hidden ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
             </button>
           )}
           <button
@@ -536,11 +581,7 @@ function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level:
             className="p-1 hover:bg-secondary rounded"
             title={node.locked ? 'Unlock' : 'Lock'}
           >
-            {node.locked ? (
-              <Lock className="w-3 h-3" />
-            ) : (
-              <Unlock className="w-3 h-3" />
-            )}
+            {node.locked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
           </button>
         </div>
       </div>
@@ -549,7 +590,12 @@ function TreeNode({ node, level, warningNodeIds }: { node: ComponentNode; level:
       {hasChildren && !node.collapsed && (
         <div>
           {node.children.map((child) => (
-            <TreeNode key={child.id} node={child} level={level + 1} warningNodeIds={warningNodeIds} />
+            <TreeNode
+              key={child.id}
+              node={child}
+              level={level + 1}
+              warningNodeIds={warningNodeIds}
+            />
           ))}
         </div>
       )}

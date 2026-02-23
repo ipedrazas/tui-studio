@@ -35,3 +35,4 @@ checks:
     - common:ci
     - common:health
     - common:license
+    - common:api_docs

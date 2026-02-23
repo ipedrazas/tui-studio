@@ -129,7 +129,7 @@ export function Canvas() {
     updateCanvasSize();
     window.addEventListener('resize', updateCanvasSize);
     return () => window.removeEventListener('resize', updateCanvasSize);
-  }, [canvasStore.sizeMode, canvasStore.zoom, root]);
+  }, [canvasStore, canvasStore.sizeMode, canvasStore.zoom, root]);
 
   // Keyboard navigation for selected components
   useEffect(() => {

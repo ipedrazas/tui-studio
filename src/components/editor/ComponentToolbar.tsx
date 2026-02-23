@@ -17,7 +17,7 @@ import { ComponentType } from '../../types';
 import { dragStore } from '../../hooks/useDragAndDrop';
 import { useComponentStore, useSelectionStore } from '../../stores';
 import { COMPONENT_LIBRARY } from '../../constants/components';
-import { getComponentIcon } from './ComponentTree';
+import { getComponentIcon } from './componentIcons';
 
 type ToolbarPosition = 'TL' | 'T' | 'TR' | 'BL' | 'B' | 'BR' | 'custom';
 

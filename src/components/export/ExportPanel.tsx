@@ -6,7 +6,6 @@ import { useComponentStore, useCanvasStore } from '../../stores';
 import { exportToText, exportToCode, exportToHtmlFile, ansiToHtml } from '../../utils/export';
 import { saveToDownloadFolder } from '../../utils/downloadManager';
 // ExportFormat is typed as an interface but used as a string in the codebase
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CodeFormat = any;
 
 type ExportMode = 'preview' | 'text' | 'code';

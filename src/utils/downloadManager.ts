@@ -13,7 +13,7 @@ export function getDownloadFolderName(): string {
 export async function selectDownloadFolder(): Promise<string | null> {
   if (!isDirectoryPickerSupported()) return null;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     _directoryHandle = await (window as any).showDirectoryPicker();
     const name = _directoryHandle!.name;
     localStorage.setItem('settings-download-folder', name);
@@ -36,9 +36,9 @@ export async function saveToDownloadFolder(
 ): Promise<boolean> {
   if (!_directoryHandle) return false;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const fileHandle = await (_directoryHandle as any).getFileHandle(filename, { create: true });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const writable = await (fileHandle as any).createWritable();
     await writable.write(content);
     await writable.close();

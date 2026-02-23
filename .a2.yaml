@@ -26,3 +26,12 @@ checks:
     - common:metrics
     - common:tracing
     - common:dockerfile
+    - common:k8s
+    - common:integration
+    - common:errors
+    - common:contributing
+    - node:type
+    - "*:logging"
+    - common:ci
+    - common:health
+    - common:license

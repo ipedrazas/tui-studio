@@ -202,6 +202,7 @@ export function wrapWithAnsi(text: string, style: AnsiStyle, colorMode?: 'ansi16
  * Strip ANSI codes from text
  */
 export function stripAnsi(text: string): string {
+  // eslint-disable-next-line no-control-regex
   return text.replace(/\x1b\[[0-9;]*m/g, '');
 }
 

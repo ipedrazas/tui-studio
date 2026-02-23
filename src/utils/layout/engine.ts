@@ -51,7 +51,7 @@ export class LayoutEngine {
    */
   getNodesWithWarnings(): string[] {
     return Array.from(this.debugInfo.entries())
-      .filter(([_, info]) => info.warnings.length > 0)
+      .filter(([, info]) => info.warnings.length > 0)
       .map(([id]) => id);
   }
 
@@ -402,11 +402,12 @@ export class LayoutEngine {
         // Add border width if border is enabled
         return node.style.border ? contentWidth + 2 : contentWidth;
       }
-      case 'Text':
+      case 'Text': {
         const content = (node.props.content as string) || '';
         const lines = content.split('\n');
         const maxLineLength = Math.max(...lines.map(l => l.length), 10);
         return node.style.border ? maxLineLength + 2 : maxLineLength;
+      }
       default:
         return 20;
     }
@@ -533,10 +534,11 @@ export class LayoutEngine {
       case 'Spinner':
       case 'ProgressBar':
         return node.style.border ? 3 : 1;
-      case 'Text':
+      case 'Text': {
         const content = (node.props.content as string) || '';
         const contentHeight = content.split('\n').length;
         return node.style.border ? contentHeight + 2 : contentHeight;
+      }
       case 'Breadcrumb':
         return 1;
       default:

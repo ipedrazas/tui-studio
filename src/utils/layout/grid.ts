@@ -38,8 +38,8 @@ export function calculateGridLayout(
     const y = padding + (row * (rowHeight + rowGap));
 
     // Determine cell dimensions
-    let cellWidth = columnWidth;
-    let cellHeight = rowHeight;
+    const cellWidth = columnWidth;
+    const cellHeight = rowHeight;
 
     // Resolve child dimensions
     let width = cellWidth;

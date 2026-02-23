@@ -181,9 +181,10 @@ function calculateJustifySpacing(justify: string, freeSpace: number, itemCount: 
       return itemCount > 1
         ? { spacing: freeSpace / (itemCount - 1), offset: 0 }
         : { spacing: 0, offset: 0 };
-    case 'space-around':
+    case 'space-around': {
       const spacing = freeSpace / itemCount;
       return { spacing, offset: spacing / 2 };
+    }
     default: // 'start'
       return { spacing: 0, offset: 0 };
   }

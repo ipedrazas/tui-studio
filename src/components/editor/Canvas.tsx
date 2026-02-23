@@ -435,6 +435,33 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
     startHeight: number;
   } | null>(null);
 
+  // Global mouse handlers while a resize drag is active
+  useEffect(() => {
+    if (!resizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaCharW = Math.round((e.clientX - resizing.startX) / (cellWidth * zoom));
+      const deltaCharH = Math.round((e.clientY - resizing.startY) / (cellHeight * zoom));
+      const updates: Record<string, number> = {};
+      if (resizing.direction !== 's') {
+        updates.width = Math.max(4, resizing.startWidth + deltaCharW);
+      }
+      if (resizing.direction !== 'e') {
+        updates.height = Math.max(1, resizing.startHeight + deltaCharH);
+      }
+      componentStore.updateProps(node.id, updates);
+    };
+
+    const handleMouseUp = () => setResizing(null);
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizing, cellWidth, cellHeight, zoom, node.id, componentStore]);
+
   if (!layout) return null;
 
   const hasOverflow = layoutEngine.getDebugInfo(node.id)?.overflow === true;
@@ -836,33 +863,6 @@ const ComponentRenderer = memo(function ComponentRenderer({ node, cellWidth, cel
       startHeight: layout.height,
     });
   };
-
-  // Global mouse handlers while a resize drag is active
-  useEffect(() => {
-    if (!resizing) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaCharW = Math.round((e.clientX - resizing.startX) / (cellWidth * zoom));
-      const deltaCharH = Math.round((e.clientY - resizing.startY) / (cellHeight * zoom));
-      const updates: Record<string, number> = {};
-      if (resizing.direction !== 's') {
-        updates.width = Math.max(4, resizing.startWidth + deltaCharW);
-      }
-      if (resizing.direction !== 'e') {
-        updates.height = Math.max(1, resizing.startHeight + deltaCharH);
-      }
-      componentStore.updateProps(node.id, updates);
-    };
-
-    const handleMouseUp = () => setResizing(null);
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [resizing, cellWidth, cellHeight, zoom, node.id, componentStore]);
 
   const hasBorder = node.style.border;
   const borderColor = hasBorder ? (getColor(node.style.borderColor) || 'hsl(var(--foreground))') : null;
